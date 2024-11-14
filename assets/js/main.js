@@ -41,10 +41,11 @@ const App = () => {
                     created_utc: child.data.created_utc,
                     gallery_data: child.data.gallery_data,
                     media_metadata: child.data.media_metadata,
-                    pinned: child.data.stickied
+                    pinned: child.data.stickied,
+                    ups: child.data.ups - child.data.downs
                 }));
                 setPosts(fetchedPosts);
-                setContentBlockerDetected(true);
+                setContentBlockerDetected(false);
             })
             .catch(error => {
                 console.error('Fetch error:', error);
@@ -61,7 +62,8 @@ const App = () => {
                         author: child.data.author,
                         body: child.data.body,
                         media_metadata: child.data.media_metadata,
-                        pinned: child.data.stickied
+                        pinned: child.data.stickied,
+                        ups: child.data.ups - child.data.downs
                     };
                     if (commentData.body.includes("https://preview.redd.it")) {
                         const mediaId = Object.keys(commentData.media_metadata)[0];
@@ -298,6 +300,10 @@ const App = () => {
                             <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
                                 {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
                                 <span>{selectedPost.title}</span>
+                                <span className="text-gray-400 ml-2 flex items-center">
+                                    <i className="fas fa-arrow-up mr-1"></i>
+                                    {selectedPost.ups} upvotes
+                                </span>
                             </div>
                             <div className="text-gray-400 text-sm mt-1 flex justify-between">
                                 <span>by {selectedPost.author}</span>
@@ -325,6 +331,7 @@ const App = () => {
                                         <span>by {comment.author}</span>
                                         {comment.pinned && <i className="fas fa-thumbtack text-yellow-500 ml-2"></i>}
                                     </div>
+                                    <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {comment.ups} upvotes</span>
                                     <div>{renderFormattedText(comment.body)}</div>
                                     {comment.imageUrl && <img src={comment.imageUrl} alt="Comment embedded content" className="mt-2 rounded" height="35%" width="35%" />}
                                 </div>
@@ -338,6 +345,10 @@ const App = () => {
                                     <div className="flex items-center">
                                         {post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
                                         <span>{post.title}</span>
+                                        <span className="text-gray-400 ml-2 flex items-center">
+                                        <i className="fas fa-arrow-up mr-1"></i>
+                                        {post.ups}
+                                        </span>
                                     </div>
                                     <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => viewPost(post.id)}>View Post</button>
                                 </div>
