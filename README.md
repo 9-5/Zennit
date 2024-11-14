@@ -1,37 +1,56 @@
-<p align="center"><img src="asset\zennit-logo.png" height="250" width="250"/></p>
+<p align="center"><img src="assets\zennit-logo.png" height="250" width="250"/></p>
 
 # Zennit - A Zen Reddit Experience
 
-Welcome to Zennit, a web application that provides a clean and zen-like interface for browsing Reddit. This project leverages React and Tailwind CSS to deliver a smooth user experience while interacting with Reddit's API.
+Zennit is a zen Reddit experience designed to provide a clean and user-friendly interface for browsing Reddit posts and comments. Built with React and Tailwind CSS, Zennit allows users to interact with their favorite subreddits, add new ones, and manage their viewing experience seamlessly.
 
 ## Table of Contents
 
-- [Features](#features)
-- [Technologies](#technologies)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+[Features](#features)
+
+[Technologies Used](#technologies-used)
+
+[Installation](#installation)
+
+[Usage](#usage)
 
 ## Features
 
-- **Subreddit Management**: Add and remove subreddits to your list for easy access.
-- **Post Viewing**: View posts from selected subreddits, including titles, authors, and upvotes.
-- **Comments Section**: Read and interact with comments on posts.
-- **Responsive Design**: Fully responsive layout for desktop and mobile devices.
-- **Content Blocker Detection**: Alerts users if a content blocker is preventing posts from loading.
-- **Markdown Support**: Render formatted text, including links, images, and code blocks.
+- **Subreddit Management**: Easily add, select, and delete subreddits from your list.
+- **Post Browsing**: View posts sorted by different criteria such as Hot, New, Top, and Rising.
+- **Comments Section**: Dive into discussions with a dedicated comments view for each post.
+- **Responsive Design**: Optimized for both desktop and mobile devices.
+- **Saved Subreddits**: Stores your favorite subreddits to access them quickly.
 
-## Technologies
+## Technologies Used
 
-- **React**: A JavaScript library for building user interfaces.
-- **Tailwind CSS**: A utility-first CSS framework for styling.
-- **Font Awesome**: Icon library for scalable vector icons.
-- **Babel**: A JavaScript compiler that allows us to use modern JavaScript features.
+- **React**: For building the user interface.
+- **Tailwind CSS**: For styling and responsive design.
+- **Babel**: For JavaScript transpilation.
+- **Font Awesome**: For icons.
+- **Reddit API**: To fetch posts and comments from Reddit.
 
 ## Installation
+
+To run Zennit locally, follow these steps:
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/zennit.git
    cd zennit
+   ```
+
+2. Open `index.html` in your web browser.No additional setup is required, as the project is designed to run directly from the HTML file.
+
+**You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
+
+## Usage
+1. Open `index.html` in your web browser.
+2. Open the subreddit sidebar by clicking on the Zennit logo in the top-left corner.
+3. Add your favorite subreddits by entering `r/SubredditName` and clicking "Add".
+4. Select a subreddit by clicking on its name in the sidebar.
+5. Click on a post to view its comments.
+6. View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+7. Enjoy a clean and user-friendly interface for browsing Reddit posts and comments.
+
+__Subreddits can be removed in the sidebar by right-clicking on the subreddit name or long-pressing on the subreddit name.__
