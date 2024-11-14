@@ -4,6 +4,10 @@
 
 Welcome to Zennit, a web application that provides a clean and zen-like interface for browsing Reddit. This project leverages React and Tailwind CSS to deliver a smooth user experience while interacting with Reddit's API.
 
+Right out of the box, Zennit made to function with both mobile devices and standard PC web browsers.
+
+View a live demo here: [0kb.org/app/zennit/](https://0kb.org/app/zennit/)
+
 ## Table of Contents
 
 - [Features](#features)
