@@ -4,6 +4,10 @@
 
 Zennit is a zen Reddit experience designed to provide a clean and user-friendly interface for browsing Reddit posts and comments. Built with React and Tailwind CSS, Zennit allows users to interact with their favorite subreddits, add new ones, and manage their viewing experience seamlessly.
 
+Right out of the box, Zennit made to function with both mobile devices and standard PC web browsers.
+
+View a live demo here: [0kb.org/app/zennit/](https://0kb.org/app/zennit/)
+
 ## Table of Contents
 
 [Features](#features)
