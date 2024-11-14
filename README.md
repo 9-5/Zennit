@@ -1,4 +1,4 @@
-<p align="center"><img src="asset\zennit-logo.png" height="250" width="250"/></p>
+<p align="center"><img src="assets\zennit-logo.png" height="250" width="250"/></p>
 
 # Zennit - A Zen Reddit Experience
 
