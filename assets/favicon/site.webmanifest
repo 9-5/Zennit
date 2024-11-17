@@ -1,0 +1,8 @@
+{
+  "name": "Zennit - A zen Reddit experience",
+  "short_name": "Zennit",
+  "icons": [],
+  "theme_color": "#2b3e80",
+  "background_color": "#2b3e80",
+  "display": "standalone"
+}
