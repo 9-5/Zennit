@@ -58,25 +58,39 @@ const App = () => {
         fetch(`https://www.reddit.com/${selectedSubreddit}/comments/${postId}.json?sort=${commentSort}`)
             .then(response => response.json())
             .then(data => {
+                const postTitle = data[0].data.children[0].data.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
                 const fetchedComments = data[1].data.children.map(child => {
                     const commentData = {
                         author: child.data.author,
                         body: child.data.body,
                         media_metadata: child.data.media_metadata,
                         pinned: child.data.stickied,
-                        ups: child.data.ups - child.data.downs
+                        ups: child.data.ups - child.data.downs,
+                        replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
+                            author: reply.data.author,
+                            body: reply.data.body,
+                            media_metadata: reply.data.media_metadata,
+                            pinned: reply.data.stickied,
+                            ups: reply.data.ups - reply.data.downs,
+                        })) : []
                     };
-                    // Initialize visibility state for each comment
+    
+                    if (commentData.media_metadata && commentData.media_metadata.length > 0) {
+                        commentData.media_metadata.forEach(media => {
+                            media.s.u = media.s.u.replace(/redd\.it\/(.*?)(\.jpeg|\.jpg|\.png)/, `redd.it/${postTitle}$1$2`);
+                        });
+                    }
+    
                     return { ...commentData, isVisible: true };
                 });
                 setComments(fetchedComments);
-                setCommentVisibility(new Array(fetchedComments.length).fill(true)); // All comments start as visible
+                setCommentVisibility(new Array(fetchedComments.length).fill(true));
             });
     };
 
     const toggleCommentVisibility = (index) => {
         const updatedVisibility = [...commentVisibility];
-        updatedVisibility[index] = !updatedVisibility[index]; // Toggle the visibility
+        updatedVisibility[index] = !updatedVisibility[index];
         setCommentVisibility(updatedVisibility);
     };
 
@@ -168,7 +182,7 @@ const App = () => {
         const items = post.gallery_data.items.map(item => {
             const media = post.media_metadata[item.media_id];
             const src = media.s.u.replace(/&amp;/g, '&');
-            return <img key={item.media_id} src={src} alt="Gallery item" className="w-full h-auto rounded mt-2 max-w-full" />;
+            return <img key={item.media_id} src={src} alt="Gallery item" className="w-full h-auto rounded mt-2 max-w-full" height="30%" width="30%" />;
         });
 
         return <div className="gallery">{items}</div>;
@@ -176,11 +190,17 @@ const App = () => {
 
     const renderFormattedText = (text) => {
         const sanitizedText = text.replace(/\\/g, '');
+        const cleanText = sanitizedText.replace(/\n\n+/g, '\n');
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-        let formattedText = sanitizedText.replace(linkRegex, (match, p1, p2) => {
+        let formattedText = cleanText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
-      
+
+        const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
+        formattedText = formattedText.replace(previewRedditRegex, (match) => {
+            return `<img src="${match}" alt="Comment embedded content" class="mt-2 rounded" height="30%" width="30%" />`;
+        });
+    
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
             { regex: /\^(\S+)/g, tag: 'sup' },
@@ -204,12 +224,13 @@ const App = () => {
                 return `<${tag} class="${className || ''}">${p2}</${tag}>`;
             });
         });
-
+    
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
         formattedText = formattedText.replace(codeBlockRegex, (match, p1) => {
             const codeContent = p1.replace(/^ {4}/gm, '');
             return `<pre>${codeContent}</pre>`;
         });
+        
         formattedText = formattedText.replace(/\n/g, '<br/>');
         return <span dangerouslySetInnerHTML={{ __html: formattedText }} />;
     };
@@ -220,14 +241,48 @@ const App = () => {
         } else if (post.url && !post.url.includes("/comments/")) {
             const isRedditUrl = post.url.includes("reddit.com") || post.url.includes("redd.it");
             return isRedditUrl ? (
-                <img src={post.url} alt="Post content" className="mt-2 rounded max-w-full" />
+                <img src={post.url} alt="Post content" className="mt-2 rounded max-w-full" height="30%" width="30%" />
             ) : (
                 <a href={post.url} className="text-blue-500 underline mt-2 block">{post.url}</a>
             );
         }
         return null;
     };
+    const Comment = ({ comment }) => {
+        const [isVisible, setIsVisible] = useState(true);
+        
+        const toggleVisibility = () => {
+            setIsVisible(!isVisible);
+        };
 
+        return (
+            <div className="text-white bg-gray-700 p-2 rounded mt-1">
+                <div className="flex items-center text-gray-400 text-sm">
+                    <button className="ml-2 text-blue-500" onClick={toggleVisibility}>
+                        {isVisible ? '[ - ]' : '[ + ]'}
+                    </button>
+                    <span>by {comment.author}</span>
+                </div>
+                {isVisible && (
+                    <div>
+                        <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {comment.ups} upvotes</span>
+                        <div>{renderFormattedText(comment.body)}</div>
+                        {comment.media_metadata && comment.media_metadata.length > 0 && (
+                            <img src={comment.media_metadata[0].s.u} alt="Comment embedded content" className="mt-2 rounded" height="30%" width="30%" />
+                        )}
+                        {comment.replies && comment.replies.length > 0 && (
+                            <div className="ml-4">
+                                {comment.replies.map((reply, index) => (
+                                    <Comment key={index} comment={reply} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+    
     return (
         <div className="flex h-screen">
             <div ref={sidebarRef} className={`fixed inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out w-64 bg-gray-900 p-4 z-50`}>
@@ -328,28 +383,12 @@ const App = () => {
                                 </div>
                             </div>
                             <div className="text-gray-400 text-sm mt-1">Comments</div>
-                            {comments.map((comment, index) => (
-                                <div className="text-white bg-gray-700 p-2 rounded mt-1" key={index}>
-                                    <div className="flex items-center text-gray-400 text-sm">
-                                        <button className="ml-2 text-blue-500" onClick={() => toggleCommentVisibility(index)}>
-                                            {commentVisibility[index] ? '[ - ]' : '[ + ]'} 
-                                        </button><span>by {comment.author}</span>
-
-                                    </div>
-                                {commentVisibility[index] ? (
-                                    <div>
-                                        <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {comment.ups} upvotes</span>
-                                        <div>{renderFormattedText(comment.body)}</div>
-                                        {comment.media_metadata && comment.media_metadata.length > 0 && (
-                                            <img src={comment.media_metadata[0].s.u} alt="Comment embedded content" className="mt-2 rounded" height="35%" width="35%" />
-                                        )}
-                                    </div> 
-                                ) : null}
-                                </div>
-                            ))}
-                            <button className="mt-4 p-2 bg-gray-700 text-white rounded" onClick={() => setSelectedPost(null)}>Back to Posts</button>
-                        </div>
-                    ) : (
+                        {comments.map((comment, index) => (
+                            <Comment key={index} comment={comment} />
+                        ))}
+                        <button className="mt-4 p-2 bg-gray-700 text-white rounded" onClick={() => setSelectedPost(null)}>Back to Posts</button>
+                    </div>
+                ) : (
                         posts.map((post, index) => (
                             <div className="mb-4" key={index}>
                                 <div className="text-white bg-gray-700 p-2 rounded mt-1 flex justify-between items-center">
