@@ -60,7 +60,7 @@ const App = () => {
                     ups: child.data.ups - child.data.downs
                 }));
 
-                setPosts(prevPosts => [...prevPosts, ...fetchedPosts]); // Append only unique posts
+                setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
                 setHasMorePosts(fetchedPosts.length > 0);
                 setContentBlockerDetected(false);
             })
