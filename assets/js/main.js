@@ -2,6 +2,8 @@ const { useState, useEffect, useRef } = React;
 
 const App = () => {
     const [contentBlockerDetected, setContentBlockerDetected] = useState(false);
+    const [loadingPosts, setLoadingPosts] = useState(false);
+    const [loadingComments, setLoadingComments] = useState(false);
     const [subreddits, setSubreddits] = useState(() => {
         const savedSubreddits = localStorage.getItem('subreddits');
         return savedSubreddits ? JSON.parse(savedSubreddits) : [{ name: 'r/technology' }];
@@ -24,13 +26,8 @@ const App = () => {
     const [commentVisibility, setCommentVisibility] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMorePosts, setHasMorePosts] = useState(true);
-    const [hasMoreComments, setHasMoreComments] = useState(true);
     const [savedPosts, setSavedPosts] = useState(() => {
         const saved = localStorage.getItem('savedPosts');
-        return saved ? JSON.parse(saved) : [];
-    });
-    const [savedComments, setSavedComments] = useState(() => {
-        const saved = localStorage.getItem('savedComments');
         return saved ? JSON.parse(saved) : [];
     });
     const [viewingSaved, setViewingSaved] = useState(false);
@@ -39,6 +36,7 @@ const App = () => {
     
 
     const fetchPosts = (page = 1) => {
+        setLoadingPosts(true);
         fetch(`https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}&limit=25`)
             .then(response => {
                 if (!response.ok) {
@@ -68,10 +66,14 @@ const App = () => {
             .catch(error => {
                 console.error('Fetch error:', error);
                 setContentBlockerDetected(true);
+            })
+            .finally(() => {
+                setLoadingPosts(false);
             });
     };
 
     const fetchComments = (postId) => {
+        setLoadingComments(true);
         fetch(`https://www.reddit.com/${selectedSubreddit}/comments/${postId}.json?sort=${commentSort}`)
             .then(response => response.json())
             .then(data => {
@@ -102,6 +104,12 @@ const App = () => {
                 });
                 setComments(fetchedComments);
                 setCommentVisibility(new Array(fetchedComments.length).fill(true));
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
             });
     };
 
@@ -165,19 +173,6 @@ const App = () => {
     useEffect(() => {
         fetchPosts(currentPage);
     }, [selectedSubreddit, sort, currentPage]);
-
-
-    useEffect(() => {
-        setCurrentPage(1);
-        setPosts([]);
-        fetchPosts(1); 
-    }, [selectedSubreddit, sort]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-        setPosts([]);
-        fetchPosts(1);
-    }, [sort]);
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
@@ -452,12 +447,17 @@ const App = () => {
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
+                    {loadingPosts && (
+                        <div className="text-white text-center">
+                            <i className="fas fa-yin-yang fa-spin fa-10x"></i>
+                        </div>
+                    )}
                     {viewingSaved ? (
-                    <div>
-                        <h2 className="text-white text-xl mb-4">Saved Posts</h2>
-                        {renderSavedPosts()}
-                    </div>
-                ) : selectedPost ? (
+                        <div>
+                            <h2 className="text-white text-xl mb-4">Saved Posts</h2>
+                            {renderSavedPosts()}
+                        </div>
+                    ) : selectedPost ? (
                         <div>
                             <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
                                 {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
@@ -487,7 +487,12 @@ const App = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="text-gray-400 text-sm mt-1">Comments</div>
+                    <div className="text-gray-400 text-sm mt-1">Comments</div>
+                        {loadingComments && (
+                            <div className="text-white text-center">
+                                <i className="fas fa-yin-yang fa-spin fa-10x"></i>
+                            </div>
+                        )}
                         {comments.map((comment, index) => (
                             <Comment key={index} comment={comment} />
                         ))}
