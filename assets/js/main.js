@@ -59,12 +59,9 @@ const App = () => {
                     pinned: child.data.stickied,
                     ups: child.data.ups - child.data.downs
                 }));
-                const uniquePosts = fetchedPosts.filter(newPost => 
-                    !posts.some(existingPost => existingPost.id === newPost.id)
-                );
-    
-                setPosts(prevPosts => [...prevPosts, ...uniquePosts]); // Append only unique posts
-                setHasMorePosts(uniquePosts.length > 0);
+
+                setPosts(prevPosts => [...prevPosts, ...fetchedPosts]); // Append only unique posts
+                setHasMorePosts(fetchedPosts.length > 0);
                 setContentBlockerDetected(false);
             })
         
