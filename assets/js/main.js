@@ -176,17 +176,10 @@ const App = () => {
     }, [hasMorePosts]);
 
     useEffect(() => {
-        fetchPosts(currentPage);
-    }, [selectedSubreddit, sort, currentPage]);
-
-    useEffect(() => {
         setPosts([]);
-        fetchPosts(2);
+        fetchPosts(currentPage);
     }, [selectedSubreddit, sort]);
 
-    useEffect(() => {
-        fetchPosts(2);
-    }, [sort]);
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
