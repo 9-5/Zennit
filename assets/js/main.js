@@ -16,6 +16,7 @@ const App = () => {
     const [sort, setSort] = useState('hot');
     const [commentSort, setCommentSort] = useState('best');
     const [newSubreddit, setNewSubreddit] = useState('');
+    const [toastMessage, setToastMessage] = useState('');
     const [showPopup, setShowPopup] = useState(false);
     const [subredditToDelete, setSubredditToDelete] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,6 +25,18 @@ const App = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMorePosts, setHasMorePosts] = useState(true);
     const [hasMoreComments, setHasMoreComments] = useState(true);
+    const [savedPosts, setSavedPosts] = useState(() => {
+        const saved = localStorage.getItem('savedPosts');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [savedComments, setSavedComments] = useState(() => {
+        const saved = localStorage.getItem('savedComments');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [viewingSaved, setViewingSaved] = useState(false);
+    const [postToDelete, setPostToDelete] = useState(null);
+    const [showDeletePopup, setShowDeletePopup] = useState(false);
+    
 
     const fetchPosts = (page = 1) => {
         fetch(`https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}&limit=25`)
@@ -98,6 +111,47 @@ const App = () => {
         setCommentVisibility(updatedVisibility);
     };
 
+    const savePost = (post) => {
+        if (!savedPosts.some(savedPost => savedPost.id === post.id)) {
+            const updatedSavedPosts = [...savedPosts, post];
+            setSavedPosts(updatedSavedPosts);
+            localStorage.setItem('savedPosts', JSON.stringify(updatedSavedPosts));
+            setToastMessage('Post saved!');
+        }
+    };
+
+    const handleSavedPostRightClick = (e, post) => {
+        e.preventDefault();
+        setPostToDelete(post);
+        setShowDeletePopup(true);
+    };
+
+    const confirmDeletePost = () => {
+        setSavedPosts(savedPosts.filter(p => p.id !== postToDelete.id));
+        localStorage.setItem('savedPosts', JSON.stringify(savedPosts.filter(p => p.id !== postToDelete.id)));
+        setShowDeletePopup(false);
+        setPostToDelete(null);
+        setToastMessage('Post removed from bookmarks!');
+    };
+    
+    const cancelDeletePost = () => {
+        setShowDeletePopup(false);
+        setPostToDelete(null);
+    };
+
+    const renderSavedPosts = () => {
+        
+        return savedPosts.map((post, index) => (
+            
+            <div className="mb-4" key={index} onContextMenu={(e) => handleSavedPostRightClick(e, post)}>
+                <div className="text-white bg-gray-700 p-2 rounded mt-1 flex justify-between items-center" onClick={() => viewPost(post.id)}>
+                    <span>{post.title}</span>
+                    <button className="ml-4 p-2 bg-gray-700 text-white rounded">View Post</button>
+                </div>
+            </div>
+        ));
+    };
+
     useEffect(() => {
         const handleScroll = () => {
             if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || !hasMorePosts) return;
@@ -114,9 +168,9 @@ const App = () => {
 
 
     useEffect(() => {
-        setCurrentPage(1); // Reset to the first page
-        setPosts([]); // Clear previous posts
-        fetchPosts(1); // Fetch the first page of posts
+        setCurrentPage(1);
+        setPosts([]);
+        fetchPosts(1); 
     }, [selectedSubreddit, sort]);
 
     useEffect(() => {
@@ -134,9 +188,10 @@ const App = () => {
     }, [selectedSubreddit]);
 
     const viewPost = (postId) => {
-        const post = posts.find(p => p.id === postId);
+        const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         setSelectedPost(post);
         fetchComments(postId);
+        setViewingSaved(false);
     };
 
     const addSubreddit = () => {
@@ -156,6 +211,7 @@ const App = () => {
         setSubreddits(subreddits.filter(sub => sub.name !== subredditToDelete));
         setShowPopup(false);
         setSubredditToDelete(null);
+        setToastMessage('Subreddit removed!');
     };
 
     const cancelDelete = () => {
@@ -202,6 +258,19 @@ const App = () => {
     };
 
     const [touchStartX, setTouchStartX] = useState(null);
+
+    const Toast = ({ message, onClose }) => {
+        useEffect(() => {
+            const timer = setTimeout(onClose, 3000); // Automatically close after 3 seconds
+            return () => clearTimeout(timer);
+        }, [onClose]);
+    
+        return (
+            <div className="fixed bottom-4 right-4 bg-green-500 text-white p-2 rounded shadow-lg">
+                {message}
+            </div>
+        );
+    };
 
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
@@ -275,7 +344,7 @@ const App = () => {
         }
         return null;
     };
-    const Comment = ({ comment }) => {
+    const Comment = ({ comment, saveComment  }) => {
         const [isVisible, setIsVisible] = useState(true);
         
         const toggleVisibility = () => {
@@ -359,8 +428,8 @@ const App = () => {
                 </div>
             )}
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center cursor-pointer" onClick={() => setSelectedPost(null)}>
-                        <button className="text-white mr-4" onClick={() => setSidebarOpen(true)}>
+                    <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); }}>
+                        <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false); setSidebarOpen(true) }}>
                             <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Reddit Icon" className="w-8 h-8" />
                         </button>
                         <div className="ml-2">
@@ -377,14 +446,23 @@ const App = () => {
                         <button className="text-white ml-4" onClick={fetchPosts}>
                             <i className="fas fa-sync-alt"></i>
                         </button>
+                        <button className="text-white ml-4" onClick={() => setViewingSaved(!viewingSaved)}>
+                            {viewingSaved ? <i class="fas fa-bookmark inactive" id="bookmarkIcon"></i> : <i class="fas fa-bookmark active" id="bookmarkIcon"></i>}
+                        </button>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
-                    {selectedPost ? (
+                    {viewingSaved ? (
+                    <div>
+                        <h2 className="text-white text-xl mb-4">Saved Posts</h2>
+                        {renderSavedPosts()}
+                    </div>
+                ) : selectedPost ? (
                         <div>
                             <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
                                 {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
                                 <span>{selectedPost.title}</span>
+                                <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}><i class="fas fa-bookmark inactive" id="bookmarkIcon"></i></button>
                                 <span className="text-gray-400 ml-2 flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {selectedPost.ups} upvotes
@@ -449,6 +527,18 @@ const App = () => {
                     </div>
                 </div>
             )}
+            {showDeletePopup && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-gray-800 p-4 rounded">
+                        <div className="text-white mb-4">Do you want to delete {postToDelete.title}?</div>
+                        <div className="flex justify-end">
+                            <button className="p-2 bg-gray-700 text-white rounded mr-2" onClick={confirmDeletePost}>Yes</button>
+                            <button className="p-2 bg-gray-700 text-white rounded" onClick={cancelDeletePost}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
         </div>
     );
 };
