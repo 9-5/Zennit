@@ -14,13 +14,46 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 
-[Technologies Used](#technologies-used)
+[Technologies Used](#technologies_used)
 
 [Installation](#installation)
 
-[Usage
-... (FILE CONTENT TRUNCATED) ...
-n directly from the HTML file.
+[Usage](#usage)
+
+## Screenshots
+
+|                                       |                                       |
+|---------------------------------------|---------------------------------------|
+| ![Screenshot1](screenshots/shot1.png) | ![Screenshot2](screenshots/shot2.png) |
+
+## Features
+
+-   **Browse Reddit**: Explore posts and comments from your favorite subreddits.
+-   **Add New Subreddits**: Add any subreddits to your feed.
+-   **Clean Interface**: Enjoy a clutter-free and user-friendly design.
+-   **Mobile-Friendly**: Seamlessly browse Reddit on your mobile device.
+-   **Multiple Instances**: Access Zennit through different instances such as [zen.0kb.org](https://zen.0kb.org/) and [zen.ż.co](https://zen.ż.co/).
+-   **Light and Dark Themes**: Switch between light and dark themes.
+-   **Customizable Themes**: Create themes which persist between sessions.
+-   **Image Enlargement**: Enlarge images in posts and comments.
+-   **Save Posts**: Save interesting posts.
+-   **Search**: Search for posts across all subreddits.
+
+## Technologies Used
+
+-   [React](https://reactjs.org/)
+-   [Tailwind CSS](https://tailwindcss.com/)
+
+## Installation
+
+To run Zennit locally, simply clone the repository and open the `index.html` file in your web browser.
+
+```bash
+git clone https://github.com/0kb-club/zennit.git
+cd zennit
+```
+
+Alternatively, you can directly open the `index.html` file in your web browser without needing a local server, as all the dependencies are loaded directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 

@@ -34,9 +34,104 @@ body {
     display: inline-block;
     width: 12ch;
     overflow: hidden;
-    white-space: nowrap
-... (FILE CONTENT TRUNCATED) ...
-ackground-color: rgba(224, 242, 254, 0.5); 
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.comment {
+    margin-left: 15px;
+    padding-left: 10px;
+    border-left: 2px solid #4b4b4b;
+}
+.search-input {
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.search-results-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #555;
+    margin-top: 10px;
+}
+.search-result {
+    padding: 10px;
+    border-bottom: 1px solid #555;
+    cursor: pointer;
+}
+.search-result:hover {
+    background-color: #444;
+}
+.selected {
+    background-color: #444;
+}
+.hidden {
+    display: none;
+}
+.visible {
+    display: block;
+}
+/* Theme styles */
+.light {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+
+.light .bg-gray-700 {
+    background-color: #e2e8f0;
+}
+
+.light .bg-gray-600 {
+    background-color: #f9fafb;
+}
+
+.light .bg-gray-800 {
+    background-color: #d1d5db;
+}
+
+.light .bg-red-600 {
+    background-color: #fca5a5;
+}
+
+.light .bg-gray-900 {
+    background-color: #111827;
+}
+
+.light .text-white {
+    color: #000000;
+}
+
+.light .text-gray-400 {
+    color: #4b5563;
+}
+
+.light .text-blue-500 {
+    color: #2563eb;
+}
+
+.light .border-gray-700 {
+    border-color: #d1d5db;
+}
+
+.light .border-gray-500 {
+    border-color: #6b7280;
+}
+
+.light .bg-black {
+    background-color: #ffffff;
+}
+
+.light .bg-opacity-50 {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.amethyst {
+    background-color: #1e1e1e;
+    color: #ffffff;
 }
 
 .amethyst .bg-gray-700 {
