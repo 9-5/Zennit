@@ -312,21 +312,33 @@ const App = () => {
     };
 
     const renderFormattedText = (text) => {
-        const sanitizedText = text.replace(/\\/g, '');
-        const cleanText = sanitizedText.replace(/\n\n+/g, '\n');
+        // Check if text is valid
+        if (!text || typeof text !== 'string') {
+            return null;
+        }
+    
+        let formattedText = text;
+    
+        // Sanitize text
+        formattedText = formattedText.replace(/\\/g, '');
+        formattedText = formattedText.replace(/\n\n+/g, '\n');
+    
+        // Handle links
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-        let formattedText = cleanText.replace(linkRegex, (match, p1, p2) => {
+        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
-
+    
+        // Handle preview Reddit images
         const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
         formattedText = formattedText.replace(previewRedditRegex, (match) => {
             return `<img src="${match}" alt="Comment embedded content" class="mt-2 rounded" height="30%" width="30%" />`;
         });
     
+        // Handle inline formatting
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
-            { regex: /\^(\S+)/g, tag: 'sup' },
+            { regex: /\^(\S+)/g, tag:'sup' },
             { regex: /`(.*?)`/g, tag: 'code' }
         ];
     
@@ -336,9 +348,10 @@ const App = () => {
             });
         });
     
+        // Handle markdown formatting
         const markdownRegex = [
-            { regex: /(\*\*\*|___)(.*?)\1/g, tag: 'strong', className: 'italic' },
-            { regex: /(\*\*|__)(.*?)\1/g, tag: 'strong' },
+            { regex: /(\*\*\*|___)(.*?)\1/g, tag:'strong', className: 'italic' },
+            { regex: /(\*\*|__)(.*?)\1/g, tag:'strong' },
             { regex: /(\*|_)(.*?)\1/g, tag: 'em' }
         ];
     
@@ -348,13 +361,16 @@ const App = () => {
             });
         });
     
+        // Handle code blocks
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
         formattedText = formattedText.replace(codeBlockRegex, (match, p1) => {
             const codeContent = p1.replace(/^ {4}/gm, '');
             return `<pre>${codeContent}</pre>`;
         });
-        
+    
+        // Replace newlines with <br/>
         formattedText = formattedText.replace(/\n/g, '<br/>');
+    
         return <span dangerouslySetInnerHTML={{ __html: formattedText }} />;
     };
 
