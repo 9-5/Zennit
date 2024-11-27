@@ -12,387 +12,292 @@ const App = () => {
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
     const [comments, setComments] = useState([]);
+    const [selectedPostId, setSelectedPostId] = useState(null);
     const [showSidebar, setShowSidebar] = useState(false);
-    const [newSubreddit, setNewSubreddit] = useState('');
-    const [error, setError] = useState(null);
-	const [showErrorPopup, setShowErrorPopup] = useState(false);
-    const [selectedPost, setSelectedPost] = useState(null);
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
-    const [currentTheme, setCurrentTheme] = useState(localStorage.getItem('currentTheme') || 'dark');
+    const [error, setError] = useState(null);
+    const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [savedPosts, setSavedPosts] = useState(() => JSON.parse(localStorage.getItem('savedPosts') || '[]'));
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [postToDelete, setPostToDelete] = useState(null);
-    const [toastMessage, setToastMessage] = useState('');
+	const [toastMessage, setToastMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [searchPageVisible, setSearchPageVisible] = useState(false);
-    const [selectedSearchResult, setSelectedSearchResult] = useState(null);
 
-    const handleSearchResultClick = (post) => {
-        setSelectedSearchResult(post);
-        setSearchPageVisible(false);
-        setSelectedPost(post);
-        setComments([]);
-        setAfterComment(null);
-        setUserAfterComment(null);
-        loadComments(post.data.permalink);
-    };
-
-    const handleSearch = async () => {
-        if (!searchQuery) {
-            setSearchResults([]);
-            return;
-        }
-
-        try {
-            const response = await fetch(`https://www.reddit.com/search.json?q=${searchQuery}&sort=relevance&t=all&limit=10`);
-            const data = await response.json();
-            setSearchResults(data.data.children);
-            setSearchPageVisible(true);
-        } catch (error) {
-            console.error("Error fetching search results:", error);
-            setError(error.message || 'Failed to fetch search results');
-			setShowErrorPopup(true);
-        }
-    };
-
-    useEffect(() => {
-        localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
-    }, [savedPosts]);
-
-    const handleSavePost = (post) => {
-        const isPostSaved = savedPosts.some(savedPost => savedPost.data.id === post.data.id);
-        if (isPostSaved) {
-            setSavedPosts(savedPosts.filter(savedPost => savedPost.data.id !== post.data.id));
-            setToastMessage('Post unsaved!');
-        } else {
-            setSavedPosts([...savedPosts, post]);
-            setToastMessage('Post saved!');
-        }
-    };
-
-    const isPostSaved = (post) => {
-        return savedPosts.some(savedPost => savedPost.data.id === post.data.id);
-    };
-
-    const confirmDeleteSavedPost = (post) => {
-        setPostToDelete(post);
-        setShowDeletePopup(true);
-    };
-
-    const handleDeleteSavedPost = () => {
-        if (postToDelete) {
-            setSavedPosts(savedPosts.filter(savedPost => savedPost.data.id !== postToDelete.data.id));
-            setToastMessage('Post deleted from saved!');
-        }
-        closeDeleteSavedPostPopup();
-    };
-	
-	const closeDeleteSavedPostPopup = () => {
-        setShowDeletePopup(false);
-        setPostToDelete(null);
-    };
-
-    const toggleTheme = () => {
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setCurrentTheme(newTheme);
-        localStorage.setItem('currentTheme', newTheme);
-    };
-
-    useEffect(() => {
-        document.body.className = currentTheme;
-    }, [currentTheme]);
-
-    useEffect(() => {
-        localStorage.setItem('selectedSubreddit', selectedSubreddit);
-    }, [selectedSubreddit]);
+    const sidebarRef = useRef(null);
+    const [sortType, setSortType] = useState('hot');
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
     }, [subreddits]);
 
     useEffect(() => {
-        loadPosts();
+        localStorage.setItem('selectedSubreddit', selectedSubreddit);
     }, [selectedSubreddit]);
 
-    const loadPosts = async (loadMore = false) => {
-        if (loadingPosts) return;
-        setLoadingPosts(true);
-        setError(null);
-		
-        const afterParam = loadMore ? `&after=${after}` : '';
-		
-        try {
-            let url = `https://www.reddit.com/${selectedSubreddit}/hot.json?limit=10${afterParam}`;
-			
-			const response = await fetch(url, {
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
+    useEffect(() => {
+        localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
+    }, [savedPosts]);
 
-            if (response.status === 403) {
-                setContentBlockerDetected(true);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                setShowSidebar(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        fetchPosts();
+    }, [selectedSubreddit, sortType]);
+
+    useEffect(() => {
+        if (error) {
+            setShowErrorPopup(true);
+        } else {
+            setShowErrorPopup(false);
+        }
+    }, [error]);
+
+    const fetchPosts = async () => {
+        setLoadingPosts(true);
+        try {
+            let url = `https://www.reddit.com/${selectedSubreddit}/${sortType}.json?limit=25`;
+            if (after) {
+                url += `&after=${after}`;
+            }
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                setError(`Failed to fetch posts: ${data.message}`);
                 setLoadingPosts(false);
                 return;
             }
 
-            const data = await response.json();
-			
-            if (loadMore) {
-                setPosts(prevPosts => [...prevPosts, ...data.data.children]);
-            } else {
-                setPosts(data.data.children);
-            }
-			
+            const newPosts = data.data.children.map(post => post.data);
+            setPosts(prevPosts => [...newPosts]);
             setAfter(data.data.after);
-        } catch (e) {
-            console.error("Error fetching posts:", e);
-            setError(e.message || 'Failed to load posts');
-			setShowErrorPopup(true);
+            setError(null); // Clear any previous errors
+        } catch (error) {
+            setError(`An error occurred while fetching posts: ${error.message}`);
         } finally {
             setLoadingPosts(false);
         }
     };
-	
-	const renderErrorPopup = () => (
-        
-            
-                Error
-            
-            
-                {error}
-            
-            
-                Close
-            
-        
-    );
 
-    const loadComments = async (permalink, loadMore = false) => {
-        if (loadingComments) return;
+    const fetchComments = async (postId, type = 'comments') => {
         setLoadingComments(true);
-        setError(null);
-
-        const afterParam = loadMore ? `&after=${afterComment}` : '';
         try {
-            const response = await fetch(`https://www.reddit.com${permalink}.json?sort=top${afterParam}`);
-            const data = await response[0].json();
-
-            if (!data || !data.data || !data.data.children) {
-                console.error("Invalid comment data:", data);
-                setError('Failed to load comments due to invalid data.');
-				setShowErrorPopup(true);
-                setLoadingComments(false);
-                return;
+            let url = `https://www.reddit.com/${selectedSubreddit}/comments/${postId}.json`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.error) {
+                 setError(`Failed to fetch comments: ${data.message}`);
+                 return;
             }
-			
-            const newComments = data.data.children.filter(comment => comment.kind === 't1');
-
-            if (loadMore) {
-                setComments(prevComments => [...prevComments, ...newComments]);
-            } else {
-                setComments(newComments);
-            }
-
-            setAfterComment(data.data.after);
-
-        } catch (e) {
-            console.error("Error fetching comments:", e);
-            setError(e.message || 'Failed to load comments');
-			setShowErrorPopup(true);
+            setComments(data[1].data.children.map(comment => comment.data));
+            setSelectedPostId(postId);
+        } catch (error) {
+            setError(`An error occurred while fetching comments: ${error.message}`);
         } finally {
             setLoadingComments(false);
         }
     };
 
-    const openSidebar = () => {
-        setShowSidebar(true);
+    const addSubreddit = (newSubreddit) => {
+        if (!newSubreddit.startsWith('r/')) {
+            newSubreddit = 'r/' + newSubreddit;
+        }
+
+        if (subreddits.find(sub => sub.name === newSubreddit)) {
+			setToastMessage('Subreddit already exists!');
+            return;
+        }
+        setSubreddits(prevSubreddits => [...prevSubreddits, { name: newSubreddit }]);
+		setToastMessage('Subreddit added!');
     };
 
-    const closeSidebar = () => {
+    const removeSubreddit = (subredditToRemove) => {
+        setSubreddits(prevSubreddits => prevSubreddits.filter(sub => sub.name !== subredditToRemove));
+		setToastMessage('Subreddit removed!');
+    };
+
+    const selectSubreddit = (subreddit) => {
+        setSelectedSubreddit(subreddit);
         setShowSidebar(false);
+        setPosts([]);
+        setAfter(null);
     };
 
-    const addSubreddit = () => {
-        if (newSubreddit && !subreddits.find(sub => sub.name === newSubreddit)) {
-            setSubreddits([...subreddits, { name: newSubreddit }]);
-            setNewSubreddit('');
+    const toggleSidebar = () => {
+        setShowSidebar(!showSidebar);
+    };
+
+    const handleImageClick = (imageUrl) => {
+        setEnlargedImage(imageUrl);
+    };
+
+     const handleCommentImageClick = (imageUrl) => {
+        setEnlargedCommentImage(imageUrl);
+    };
+
+    const closeEnlargedImage = () => {
+        setEnlargedImage(null);
+        setEnlargedCommentImage(null);
+    };
+
+    const savePost = (post) => {
+        const isPostSaved = savedPosts.some(savedPost => savedPost.id === post.id);
+        if (!isPostSaved) {
+            setSavedPosts(prevSavedPosts => [...prevSavedPosts, post]);
+			setToastMessage('Post saved!');
+        } else {
+			setToastMessage('Post already saved!');
+		}
+    };
+
+    const deleteSavedPost = (postId) => {
+        setPostToDelete(postId);
+        setShowDeletePopup(true);
+    };
+
+    const confirmDeletePost = () => {
+        setSavedPosts(prevSavedPosts => prevSavedPosts.filter(post => post.id !== postToDelete));
+        setShowDeletePopup(false);
+		setToastMessage('Post deleted!');
+    };
+
+    const cancelDeletePost = () => {
+        setShowDeletePopup(false);
+        setPostToDelete(null);
+    };
+
+    const clearError = () => {
+        setError(null);
+        setShowErrorPopup(false);
+    };
+
+    const handleSortChange = (type) => {
+        setSortType(type);
+        setPosts([]);
+        setAfter(null);
+    };
+
+    const handleSearchInputChange = (event) => {
+        setSearchQuery(event.target.value);
+    };
+
+    const handleSearchSubmit = async (event) => {
+        event.preventDefault();
+        if (!searchQuery) return;
+        setSearchPageVisible(true);
+        try {
+            const response = await fetch(`https://www.reddit.com/search.json?q=${searchQuery}&sort=relevance&t=all&limit=25`);
+            const data = await response.json();
+            if (data.error) {
+                 setError(`Failed to fetch search results: ${data.message}`);
+                 return;
+            }
+            setSearchResults(data.data.children.map(result => result.data));
+        } catch (error) {
+            setError(`An error occurred while fetching search results: ${error.message}`);
         }
     };
 
-    const selectSubreddit = (subredditName) => {
-        setSelectedSubreddit(subredditName);
-        closeSidebar();
+    const handleSearchResultClick = (post) => {
+        setSearchPageVisible(false);
+        setPosts([post]); // Display only the selected post
     };
 
-    const handleSubredditChange = (e) => {
-        setNewSubreddit(e.target.value);
-    };
-	
-	const deleteSubreddit = (subredditToDelete) => {
-        setSubreddits(subreddits.filter(subreddit => subreddit.name !== subredditToDelete));
-    };
-
-    const openPost = (post) => {
-        setSelectedPost(post);
-        setComments([]);
-        setAfterComment(null);
-        setUserAfterComment(null);
-        loadComments(post.data.permalink);
-    };
-
-    const closePost = () => {
-        setSelectedPost(null);
-        setComments([]);
-    };
-	
-	const renderDeleteSavedPostPopup = () => (
+    const renderSubredditList = () => (
         
-            
-                Delete Saved Post
-            
-            
-                Are you sure you want to delete this saved post?
-            
-            
-                Cancel
-                Delete
-            
+            {subreddits.map((subreddit, index) => (
+                
+                    {subreddit.name}
+                
+            ))}
         
     );
 
-    const renderSidebar = () => (
-        
-            
-                
-                    
-                        
-                            
-                                Zennit
-                            
-                        
-                        
-                            <input
-                                type="text"
-                                value={newSubreddit}
-                                onChange={handleSubredditChange}
-                                placeholder="r/SubredditName"
-                                className="bg-gray-700 text-white rounded-md p-2 w-full mb-2"
-                            />
-                            <button onClick={addSubreddit} className="bg-blue-500 hover:bg-blue-700 text-white rounded-md p-2 w-full">
-                                Add
-                            </button>
-                        
-                        
-                            {subreddits.map((subreddit, index) => (
-                                
-                                    <span onClick={() => selectSubreddit(subreddit.name)} className="block hover:bg-gray-600 p-2 rounded-md cursor-pointer">
-                                        {subreddit.name}
-                                    </span>
-									<button onClick={() => deleteSubreddit(subreddit.name)} className="text-red-600 hover:text-red-800">
-										X
-									</button>
-                                
-                            ))}
-                        
-                    
-                
-            
-        
-    );
-
-    const renderPost = (post) => {
-        const isSaved = isPostSaved(post);
-        return (
-            
-                
-                    
-                        
-                            
-                                
-                                    {post.data.title}
-                                
-                                
-                                    
-                                        
-                                            {post.data.author}
-                                        
-                                        
-                                            {new Date(post.data.created_utc * 1000).toLocaleDateString()}
-                                        
-                                    
-                                
-                            
-                            
-                                
-                                    
-                                        {post.data.ups}
-                                    
-                                    
-                                        {post.data.num_comments}
-                                    
-                                    
-                                        
-                                            {isSaved ? 'Unsave' : 'Save'}
-                                        
-                                    
-                                
-                            
-                        
-                    
-                
-            
-        );
-    };
+	const renderPosts = () => (
+		
+			{posts.map(post => (
+				
+					{post.title}
+					{post.url && (
+						
+							{post.url}
+						
+					)}
+					{post.thumbnail && (
+						
+					)}
+					{post.author} | {post.score} points | {post.num_comments} comments
+					
+						{post.selftext && (
+							
+								{post.selftext}
+							
+						)}
+					
+				
+			))}
+		
+	);
 
     const renderPostFeed = () => (
         
-            {posts.map(post => (
-                
-                    {renderPost(post)}
-                
-            ))}
             
-                {loadingPosts ? 'Loading...' : 'Load More'}
+                
+                    Hot
+                
+                
+                    New
+                
+                
+                    Top
+                
+                
+                    Rising
+                
             
+            {posts.length > 0 ? (
+                renderPosts()
+            ) : (
+                
+                    {loadingPosts ? 'Loading posts...' : 'No posts to display.'}
+                
+            )}
+            {after && (
+                
+                    Load More
+                
+            )}
         
     );
-
-    const renderComment = (comment) => {
-        return (
-            
-                
-                    
-                        {comment.data.author}
-                        
-                    
-                    
-                        {comment.data.body}
-                    
-                
-            
-        );
-    };
 
     const renderComments = () => (
         
             {comments.map(comment => (
                 
-                    {renderComment(comment)}
+                    {comment.author}
+                    {comment.body}
                 
             ))}
-            
-                {loadingComments ? 'Loading...' : 'Load More Comments'}
-            
         
     );
-    
+
     const renderEnlargedPostImages = () => (
         
             
-                
                 
                     
                 
@@ -404,112 +309,157 @@ const App = () => {
         
             
                 
-                
                     
                 
             
         
     );
 
-    const handleImageClick = (url, isComment = false) => {
-        if (isComment) {
-            setEnlargedCommentImage(url);
-        } else {
-            setEnlargedImage(url);
-        }
-    };
-
-    const closeEnlargedImage = () => {
-        setEnlargedImage(null);
-		setEnlargedCommentImage(null);
-    };
-
-    const Toast = ({ message, onClose }) => {
-        useEffect(() => {
-            const timer = setTimeout(() => {
-                onClose();
-            }, 3000);
-            return () => clearTimeout(timer);
-        }, [onClose]);
-
-        return (
-            
-                {message}
-            
-        );
-    };
-
-    const SearchPage = ({ searchQuery, searchResults, onSelect, onClose }) => (
+    const renderErrorPopup = () => (
         
             
                 
-                    Search Results for "{searchQuery}"
-                    
+                    Error
                 
                 
-                    {searchResults.length > 0 ? (
-                        searchResults.map(post => (
-                            
-                                {post.data.title}
-                            
-                        ))
-                    ) : (
-                        
-                            No results found.
-                        
-                    )}
+                    {error}
                 
                 
-                    Close Search
+                    OK
                 
             
+        
+    );
+
+    const renderDeleteSavedPostPopup = () => (
+        
+            
+                
+                    Confirm Delete
+                
+                
+                    Are you sure you want to delete this post?
+                
+                
+                    
+                        
+                            Cancel
+                        
+                        
+                            Delete
+                        
+                    
+                
+            
+        
+    );
+	
+	const Toast = ({ message, onClose }) => {
+		useEffect(() => {
+			const timer = setTimeout(() => {
+				onClose();
+			}, 3000);
+			return () => clearTimeout(timer);
+		}, [onClose]);
+
+		return (
+			
+				{message}
+			
+		);
+	};
+
+    const SearchPage = ({ searchQuery, searchResults, onSelect, onClose }) => {
+        return (
+            
+                
+                    
+                        Search results for "{searchQuery}"
+                    
+                    
+                        Close
+                    
+                
+                {searchResults.length > 0 ? (
+                    
+                        {searchResults.map(result => (
+                            
+                                {result.title}
+                            
+                        ))}
+                    
+                ) : (
+                    
+                        No results found.
+                    
+                )}
+            
         );
-		
+    };
+
     return (
         
             
                 
                     
                         
+                        
                             
                         
                         
                             
                                 
-                                    
-                                        
-                                            Zennit
-                                        
-                                    
-                                    
-                                        Search
-                                        
-                                    
+                            
+                            
                                 
                             
                         
                     
                     
                         
-                            {selectedPost ? (
+                            
+                                
+                                    
+                                        {subreddits.map((subreddit) => (
+                                            
+                                                {subreddit.name}
+                                            
+                                        ))}
+                                    
+                                    
+                                        
+                                            Add Subreddit
+                                        
+                                    
+                                
+                            
+                        
+                    
+                
+                
+                    
+                        
+                            
                                 
                                     
                                         
                                             
-                                                {selectedPost.data.title}
-                                            
                                         
-                                        {renderComments()}
-                                    
-                                    
-                                        Close Post
                                     
                                 
-                            ) : (
-                                renderPostFeed()
-                            )}
+                            
                         
                     
+                    {searchPageVisible ? (
+                        
+                            {searchQuery}
+                            searchResults={searchResults}
+                            onSelect={handleSearchResultClick}
+                            onClose={() => setSearchPageVisible(false)} 
+                        />
+                    ) : (
+                        renderPostFeed()
+                    )}
                 
                 {enlargedImage && (renderEnlargedPostImages())}
                 {enlargedCommentImage && (renderEnlargedCommentImages())}
@@ -517,14 +467,14 @@ const App = () => {
             {showErrorPopup && renderErrorPopup()}
             {showDeletePopup && (renderDeleteSavedPostPopup())}
             {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-            {searchPageVisible && (
+            
                 
                     {searchQuery}
                     searchResults={searchResults}
                     onSelect={handleSearchResultClick}
                     onClose={() => setSearchPageVisible(false)} 
                 />
-            )}
+            
         
     )
 }

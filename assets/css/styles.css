@@ -38,100 +38,50 @@ body {
     text-overflow: ellipsis;
 }
 .comment {
-    margin-left: 15px;
+    margin-left: 20px;
     padding-left: 10px;
-    border-left: 2px solid #4b4b4b;
+    border-left: 1px solid #888;
 }
 .search-input {
-    background-color: #333;
-    color: white;
-    border: 1px solid #555;
     padding: 8px;
-    margin-bottom: 10px;
+    border: 1px solid #ccc;
     border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
+    margin-right: 8px;
 }
-.search-results-container {
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid #555;
-    margin-top: 10px;
-}
-.search-result {
-    padding: 10px;
-    border-bottom: 1px solid #555;
+
+.search-button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
 }
-.search-result:hover {
-    background-color: #444;
-}
-.selected {
-    background-color: #444;
-}
-.hidden {
-    display: none;
-}
-.visible {
-    display: block;
-}
-/* Theme styles */
-.light {
-    background-color: #f0f0f0;
-    color: #000000;
+
+.search-button:hover {
+    background-color: #3e8e41;
 }
 
-.light .bg-gray-700 {
-    background-color: #e2e8f0;
+.search-results {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
 }
 
-.light .bg-gray-600 {
-    background-color: #f9fafb;
+.search-results li {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
 }
 
-.light .bg-gray-800 {
-    background-color: #d1d5db;
+.search-results li:last-child {
+    border-bottom: none;
 }
 
-.light .bg-red-600 {
-    background-color: #fca5a5;
-}
-
-.light .bg-gray-900 {
-    background-color: #111827;
-}
-
-.light .text-white {
-    color: #000000;
-}
-
-.light .text-gray-400 {
-    color: #4b5563;
-}
-
-.light .text-blue-500 {
-    color: #2563eb;
-}
-
-.light .border-gray-700 {
-    border-color: #d1d5db;
-}
-
-.light .border-gray-500 {
-    border-color: #6b7280;
-}
-
-.light .bg-black {
-    background-color: #ffffff;
-}
-
-.light .bg-opacity-50 {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-.amethyst {
-    background-color: #1e1e1e;
-    color: #ffffff;
+.amethyst body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #2a1b3e;
+    color: #e0d6f2;
+    white-space: normal;
 }
 
 .amethyst .bg-gray-700 {

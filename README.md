@@ -13,47 +13,53 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 [Screenshots](#screenshots)
 
 [Features](#features)
+*   Search functionality to find specific posts
+*   Add and remove Subreddits from your feed
 
-[Technologies Used](#technologies_used)
+[Technologies Used](#technologies-used)
 
 [Installation](#installation)
 
 [Usage](#usage)
 
+[Contributing](#contributing)
+
+[License](#license)
+
 ## Screenshots
 
-|                                       |                                       |
-|---------------------------------------|---------------------------------------|
-| ![Screenshot1](screenshots/shot1.png) | ![Screenshot2](screenshots/shot2.png) |
+|                           Desktop View                            |                            Mobile View                             |
+| :-------------------------------------------------------------: | :-------------------------------------------------------------: |
+| <img src="./assets/screenshot/zennit-desktop.png" width="600"> | <img src="./assets/screenshot/zennit-mobile.png" width="300"> |
 
 ## Features
 
--   **Browse Reddit**: Explore posts and comments from your favorite subreddits.
--   **Add New Subreddits**: Add any subreddits to your feed.
--   **Clean Interface**: Enjoy a clutter-free and user-friendly design.
--   **Mobile-Friendly**: Seamlessly browse Reddit on your mobile device.
--   **Multiple Instances**: Access Zennit through different instances such as [zen.0kb.org](https://zen.0kb.org/) and [zen.ż.co](https://zen.ż.co/).
--   **Light and Dark Themes**: Switch between light and dark themes.
--   **Customizable Themes**: Create themes which persist between sessions.
--   **Image Enlargement**: Enlarge images in posts and comments.
--   **Save Posts**: Save interesting posts.
--   **Search**: Search for posts across all subreddits.
+Zennit offers the following features:
+
+-   Browse Reddit posts and comments in a clean and user-friendly interface.
+-   Add new subreddits to your feed.
+-   Remove subreddits from your feed.
+-   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+-   View images and videos directly in the app.
+-   Share posts and comments with others.
+-   Save posts for later viewing.
+-   Search posts by keywords
 
 ## Technologies Used
 
--   [React](https://reactjs.org/)
--   [Tailwind CSS](https://tailwindcss.com/)
+Zennit is built using the following technologies:
+
+-   [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
+-   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
 
 ## Installation
 
-To run Zennit locally, simply clone the repository and open the `index.html` file in your web browser.
+To install Zennit, follow these steps:
 
-```bash
-git clone https://github.com/0kb-club/zennit.git
-cd zennit
-```
+1.  Clone the repository to your local machine.
+2.  Open `index.html` in your web browser.
 
-Alternatively, you can directly open the `index.html` file in your web browser without needing a local server, as all the dependencies are loaded directly from the HTML file.
+**Alternatively, you can view Zennit directly from the HTML file.**
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
