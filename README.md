@@ -14,52 +14,26 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 *   Search functionality to find specific posts
-*   Add and remove Subreddits from your feed
+*   Add and remove Subreddits from your personal collection
+*   View posts sorted by different criteria
+*   View images and videos directly in the app
 
 [Technologies Used](#technologies-used)
-
-[Installation](#installation)
-
-[Usage](#usage)
-
-[Contributing](#contributing)
-
-[License](#license)
-
-## Screenshots
-
-|                           Desktop View                            |                            Mobile View                             |
-| :-------------------------------------------------------------: | :-------------------------------------------------------------: |
-| <img src="./assets/screenshot/zennit-desktop.png" width="600"> | <img src="./assets/screenshot/zennit-mobile.png" width="300"> |
-
-## Features
-
-Zennit offers the following features:
-
--   Browse Reddit posts and comments in a clean and user-friendly interface.
--   Add new subreddits to your feed.
--   Remove subreddits from your feed.
--   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
--   View images and videos directly in the app.
--   Share posts and comments with others.
--   Save posts for later viewing.
--   Search posts by keywords
-
-## Technologies Used
-
-Zennit is built using the following technologies:
-
--   [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
--   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
+*   React
+*   Tailwind CSS
+*   Reddit API
 
 ## Installation
 
-To install Zennit, follow these steps:
+As a web application, Zennit requires no formal installation. Simply open `index.html` in your web browser, or host the project on a web server to share with others. Zennit can be installed as a PWA (Progressive Web App)
 
-1.  Clone the repository to your local machine.
+__To modify the application:__
+
+1.  Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
 2.  Open `index.html` in your web browser.
-
-**Alternatively, you can view Zennit directly from the HTML file.**
+3.  Modify the code in `assets/js/main.js` and `assets/css/styles.css` to your liking.
+    *   __Important:__ The application's logic is contained directly within the HTML file.
+        *   _This is intentional, to maintain a single-file application that can be run directly from the HTML file._
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
