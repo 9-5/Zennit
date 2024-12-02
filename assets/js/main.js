@@ -68,11 +68,13 @@ const App = () => {
                     gallery_data: child.data.gallery_data,
                     media_metadata: child.data.media_metadata,
                     pinned: child.data.stickied,
-                    ups: child.data.ups - child.data.downs
+                    ups: child.data.ups - child.data.downs,
+                    media: child.data.media
                 }));
-    
+                
                 setPosts(prevPosts => [...fetchedPosts]);
                 setContentBlockerDetected(false);
+
             })
             .catch(error => {
                 console.error('Fetch error:', error);
@@ -397,8 +399,29 @@ const App = () => {
     };
 
     const renderPostContent = (post) => {
-        if (post.url && post.url.includes("https://www.reddit.com/gallery/")) {
+        if (post.media && post.media.reddit_video) {
+            return (
+                <video controls width="400" height="400">
+                    <source src={post.media.reddit_video.fallback_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            );
+        } else if (post.url && post.url.includes("https://www.reddit.com/gallery/")) {
             return renderGallery(post);
+        } else if (post.url && post.url.includes("youtube.com") || post.url.includes("youtu.be")) {
+            const videoId = post.url.includes("youtu.be") 
+                ? post.url.split('/').pop() 
+                : new URLSearchParams(new URL(post.url).search).get('v');
+            return (
+                <iframe
+                    width="400"
+                    height="400"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    frameBorder="0"
+                    allowFullScreen
+                    title="YouTube Video"
+                ></iframe>
+            );
         } else if (post.url && !post.url.includes("/comments/")) {
             const isRedditUrl = post.url.includes("reddit.com") || post.url.includes("redd.it");
             return isRedditUrl ? (
