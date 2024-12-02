@@ -35,6 +35,8 @@ const App = () => {
     const [postToDelete, setPostToDelete] = useState(null);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [editMode, setEditMode] = useState(false);
+    const [enlargedImage, setEnlargedImage] = useState(null);
+
 
     
 
@@ -335,13 +337,38 @@ const App = () => {
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
 
+        const handleImageClick = (src) => {
+            setEnlargedImage(src);
+        };
+
+        const handleCloseImage = () => {
+            setEnlargedImage(null);
+        };
+    
         const items = post.gallery_data.items.map(item => {
             const media = post.media_metadata[item.media_id];
             const src = media.s.u.replace(/&amp;/g, '&');
-            return <img key={item.media_id} src={src} alt="Gallery item" className="w-full h-auto rounded mt-2 max-w-full" height="30%" width="30%" />;
+            return (
+                <img
+                    key={item.media_id}
+                    src={src}
+                    alt="Gallery item"
+                    className="w-1/4 h-auto rounded mt-2 cursor-pointer"
+                    onClick={() => handleImageClick(src)}
+                />
+            );
         });
 
-        return <div className="gallery">{items}</div>;
+        return (
+            <div className="overflow-x-auto whitespace-nowrap flex">
+                {items}
+                {enlargedImage && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
+                        <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-full" />
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const renderFormattedText = (text) => {
