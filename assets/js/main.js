@@ -12,48 +12,51 @@ const App = () => {
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
     const [comments, setComments] = useState([]);
-    const [savedPosts, setSavedPosts] = useState(() => JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+    const [selectedPostId, setSelectedPostId] = useState(null);
     const [showSidebar, setShowSidebar] = useState(false);
-    const [selectedPost, setSelectedPost] = useState(null);
     const [sortType, setSortType] = useState('hot');
-    const [toastMessage, setToastMessage] = useState('');
+    const [currentTheme, setCurrentTheme] = useState(localStorage.getItem('theme') || 'default');
     const [showErrorPopup, setShowErrorPopup] = useState(false);
-	const [errorMessage, setErrorMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+     const [showDeletePopup, setShowDeletePopup] = useState(false);
+    const [postToDelete, setPostToDelete] = useState(null);
+    const [toastMessage, setToastMessage] = useState('');
+    const [savedPosts, setSavedPosts] = useState(() => JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+    const [searchPageVisible, setSearchPageVisible] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [postToDelete, setPostToDelete] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
-    const [searchPageVisible, setSearchPageVisible] = useState(false);
-
     const sidebarRef = useRef(null);
-    const observer = useRef(null);
-    const commentsObserver = useRef(null);
 
-    const API_URL = 'https://www.reddit.com/';
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            setCurrentTheme(savedTheme);
+            document.body.className = savedTheme;
+        }
+    }, []);
+
+    useEffect(() => {
+        document.body.className = currentTheme;
+        localStorage.setItem('theme', currentTheme);
+    }, [currentTheme]);
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
     }, [subreddits]);
+
     useEffect(() => {
         localStorage.setItem('selectedSubreddit', selectedSubreddit);
     }, [selectedSubreddit]);
-    useEffect(() => {
+     useEffect(() => {
         localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
     }, [savedPosts]);
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'default';
-        document.body.className = savedTheme;
-    }, []);
 
     useEffect(() => {
-        setPosts([]);
-        setAfter(null);
-        loadPosts(selectedSubreddit, sortType);
+        loadPosts();
     }, [selectedSubreddit, sortType]);
 
-    useEffect(() => {
+     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target) && event.target.id !== 'sidebar-toggle') {
                 setShowSidebar(false);
@@ -66,449 +69,488 @@ const App = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (posts.length > 0) {
-            observer.current = new IntersectionObserver(
-                entries => {
-                    if (entries[0].isIntersecting && !loadingPosts && after) {
-                        loadPosts(selectedSubreddit, sortType, after);
-                    }
-                },
-                { threshold: 0.1 }
-            );
-
-            const lastPost = document.querySelector('.post:last-child');
-            if (lastPost) {
-                observer.current.observe(lastPost);
-            }
-
-            return () => {
-                if (observer.current) {
-                    observer.current.disconnect();
-                }
-            };
-        }
-    }, [posts, loadingPosts, selectedSubreddit, sortType, after]);
-
-	useEffect(() => {
-        if (selectedPost) {
-            setComments([]);
-            setAfterComment(null);
-            loadComments(selectedPost.data.permalink);
-        }
-    }, [selectedPost]);
-
-    useEffect(() => {
-        if (comments.length > 0) {
-            commentsObserver.current = new IntersectionObserver(
-                entries => {
-                    if (entries[0].isIntersecting && !loadingComments && afterComment) {
-                        loadComments(selectedPost.data.permalink, afterComment);
-                    }
-                },
-                { threshold: 0.1 }
-            );
-
-            const lastComment = document.querySelector('.comment:last-child');
-            if (lastComment) {
-                commentsObserver.current.observe(lastComment);
-            }
-
-            return () => {
-                if (commentsObserver.current) {
-                    commentsObserver.current.disconnect();
-                }
-            };
-        }
-    }, [comments, loadingComments, selectedPost, afterComment]);
-
-    const toggleSidebar = () => {
-        setShowSidebar(!showSidebar);
-    };
-
-    const addSubreddit = (event) => {
-        if (event.key === 'Enter') {
-            const newSubreddit = event.target.value.trim();
-            if (newSubreddit && !subreddits.find(sub => sub.name === `r/${newSubreddit}`)) {
-                setSubreddits([...subreddits, { name: `r/${newSubreddit}` }]);
-                event.target.value = '';
-            }
-        }
-    };
-    const removeSubreddit = (subredditName) => {
-        setSubreddits(subreddits.filter(sub => sub.name !== subredditName));
-    };
-
-    const loadPosts = async (subreddit, sort = 'hot', after = null) => {
+    const loadPosts = async () => {
         setLoadingPosts(true);
         try {
-            let url = `${API_URL}${subreddit}/${sort}.json?limit=10`;
+            let url = `https://www.reddit.com/${selectedSubreddit}/${sortType}.json?limit=10`;
             if (after) {
                 url += `&after=${after}`;
             }
             const response = await fetch(url);
             const data = await response.json();
-
-			if (data.error) {
-				setErrorMessage(data.message || 'Failed to load posts.');
-				setShowErrorPopup(true);
-				setLoadingPosts(false);
-				return;
-			}
-
-            const newPosts = data.data.children.filter(post => !posts.find(p => p.data.id === post.data.id));
-            setPosts(prevPosts => [...prevPosts, ...newPosts]);
-            setAfter(data.data.after);
+            if (data && data.data && data.data.children) {
+                const newPosts = data.data.children.map(post => post.data);
+                setPosts(prevPosts => [...newPosts]);
+                setAfter(data.data.after);
+                setContentBlockerDetected(false);
+            } else {
+                 setContentBlockerDetected(true);
+                 setErrorMessage('Content blocker detected. Please disable it to load posts.');
+                 setShowErrorPopup(true);
+            }
         } catch (error) {
-			setContentBlockerDetected(true);
-            console.error("Content Blocker Detected:", error);
+             setContentBlockerDetected(true);
+             setErrorMessage('Failed to load posts. Please check your internet connection and try again.');
+             setShowErrorPopup(true);
         } finally {
             setLoadingPosts(false);
         }
     };
-	const loadComments = async (permalink, after = null) => {
+    const loadCommentsForPost = async (postId, user = null) => {
         setLoadingComments(true);
-        try {
-            let url = `${API_URL}${permalink}.json?limit=10`;
-            if (after) {
-                url += `&after=${after}`;
+         try {
+            let url = `https://www.reddit.com/comments/${postId}.json?limit=5`;
+            if(user){
+                if(userAfterComment){
+                     url = `https://www.reddit.com/user/${user}/comments.json?limit=5`;
+                     url += `&after=${userAfterComment}`;
+                }else{
+                    url = `https://www.reddit.com/user/${user}/comments.json?limit=5`;
+                }
+            } else {
+                if (afterComment) {
+                    url += `&after=${afterComment}`;
+                }
             }
+
             const response = await fetch(url);
             const data = await response.json();
-			if (Array.isArray(data) && data.length > 1 && data[1].data && data[1].data.children) {
-				const newComments = data[1].data.children
-					.filter(comment => comment.kind === 't1')
-					.filter(comment => !comments.find(c => c.data.id === comment.data.id));
-				setComments(prevComments => [...prevComments, ...newComments]);
-                setAfterComment(data[1].data.after);
-			}
+
+            if (data && data[1] && data[1].data && data[1].data.children) {
+                const newComments = data[1].data.children.map(comment => comment.data);
+                if(user){
+                    setComments(prevComments => [...newComments]);
+                    setUserAfterComment(data[1].data.after);
+                } else {
+                     setComments(prevComments => [...newComments]);
+                     setAfterComment(data[1].data.after);
+                }
+            } else {
+                  setErrorMessage('Failed to load comments.');
+                  setShowErrorPopup(true);
+            }
         } catch (error) {
-            console.error("Error loading comments:", error);
+            setErrorMessage('Error loading comments. Please try again.');
+            setShowErrorPopup(true);
         } finally {
             setLoadingComments(false);
         }
     };
-    const handlePostClick = (post) => {
-        setSelectedPost(post);
-		window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handlePostClick = (postId) => {
+        setSelectedPostId(postId);
+        setAfterComment(null)
+        loadCommentsForPost(postId);
     };
-    const closePostPreview = () => {
-        setSelectedPost(null);
-		setComments([]);
+    const loadMorePosts = () => {
+        loadPosts();
     };
-    const handleSortChange = (type) => {
+    const loadMoreComments = () => {
+        loadCommentsForPost(selectedPostId);
+    };
+    const toggleSidebar = () => {
+        setShowSidebar(!showSidebar);
+    };
+    const changeSortType = (type) => {
         setSortType(type);
+        setAfter(null);
+    };
+    const addSubreddit = (event) => {
+        if (event.key === 'Enter') {
+            const newSubredditName = event.target.value.trim();
+            if (newSubredditName && !subreddits.find(sub => sub.name === `r/${newSubredditName}`)) {
+                const newSubreddit = { name: `r/${newSubredditName}` };
+                setSubreddits([...subreddits, newSubreddit]);
+                event.target.value = '';
+            }
+        }
+    };
+
+    const removeSubreddit = (subredditName) => {
+        const updatedSubreddits = subreddits.filter(subreddit => subreddit.name !== subredditName);
+        setSubreddits(updatedSubreddits);
+        if (selectedSubreddit === subredditName) {
+            setSelectedSubreddit(updatedSubreddits.length > 0 ? updatedSubreddits[0].name : 'r/0KB');
+        }
+    };
+    const selectSubreddit = (subredditName) => {
+        setSelectedSubreddit(subredditName);
+        setShowSidebar(false);
         setPosts([]);
         setAfter(null);
-        loadPosts(selectedSubreddit, type);
     };
-    const isPostSaved = (postId) => {
-        return savedPosts.some(post => post.data.id === postId);
-    };
-    const savePost = (post) => {
-        setSavedPosts([...savedPosts, post]);
-        setToastMessage('Post saved!');
-    };
-    const unsavePost = (postId) => {
-        setSavedPosts(savedPosts.filter(post => post.data.id !== postId));
-        setToastMessage('Post unsaved!');
-    };
-    const toggleSavePost = (post) => {
-        if (isPostSaved(post.data.id)) {
-            unsavePost(post.data.id);
-        } else {
-            savePost(post);
-        }
-    };
-	const renderToast = () => {
-        if (toastMessage) {
-            return (
-                
-                    {toastMessage}
-                    ❌
-                
-            );
-        }
-        return null;
+    const toggleTheme = () => {
+        setCurrentTheme(currentTheme === 'default' ? 'amethyst' : 'default');
     };
     const closeErrorPopup = () => {
         setShowErrorPopup(false);
-		setErrorMessage('');
     };
-    const enlargeImage = (url) => {
-        setEnlargedImage(url);
+    const savePost = (post) => {
+        const isPostSaved = savedPosts.some(savedPost => savedPost.id === post.id);
+        if (!isPostSaved) {
+            setSavedPosts([...savedPosts, post]);
+            setToastMessage('Post saved!');
+            setTimeout(() => setToastMessage(''), 3000);
+        } else {
+            setToastMessage('Post already saved!');
+             setTimeout(() => setToastMessage(''), 3000);
+        }
     };
-    const enlargeCommentImage = (url) => {
-        setEnlargedCommentImage(url);
-    };
-    const closeEnlargedImage = () => {
-        setEnlargedImage(null);
-        setEnlargedCommentImage(null);
-    };
-    const confirmDeleteSavedPost = (post) => {
+    const deleteSavedPost = (postId) => {
+        setPostToDelete(postId);
         setShowDeletePopup(true);
-        setPostToDelete(post);
     };
-    const cancelDeleteSavedPost = () => {
+
+    const confirmDeletePost = () => {
+        const updatedSavedPosts = savedPosts.filter(post => post.id !== postToDelete);
+        setSavedPosts(updatedSavedPosts);
+        setShowDeletePopup(false);
+        setPostToDelete(null);
+        setToastMessage('Post deleted!');
+        setTimeout(() => setToastMessage(''), 3000);
+    };
+
+    const cancelDeletePost = () => {
         setShowDeletePopup(false);
         setPostToDelete(null);
     };
-    const deleteSavedPost = () => {
-        if (postToDelete) {
-            unsavePost(postToDelete.data.id);
-            setShowDeletePopup(false);
-            setPostToDelete(null);
-        }
+    const renderPost = (post) => {
+        const isSaved = savedPosts.some(savedPost => savedPost.id === post.id);
+        return (
+            
+                
+                    
+                        
+                            {post.title}
+                        
+                        
+                            
+                                {post.author}
+                            
+                            
+                                {new Date(post.created_utc * 1000).toLocaleString()}
+                            
+                        
+                    
+                    
+                        {post.post_hint === 'image' && (
+                            
+                        )}
+                        {post.url_overridden_by_dest && (
+                            <a href={post.url_overridden_by_dest} target="_blank" rel="noopener noreferrer">
+                                {post.domain}
+                            </a>
+                        )}
+                        {post.selftext && (
+                            
+                                {post.selftext}
+                            
+                        )}
+                         {post.media && post.media.reddit_video && (
+                            <video controls width="100%">
+                                <source src={post.media.reddit_video.fallback_url} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                        )}
+                        {post.gallery_data && post.gallery_data.items && (
+                            
+                                {post.gallery_data.items.map((item) => {
+                                    const media_id = item.media_id;
+                                    const image = post.media_metadata[media_id];
+                                    return (
+                                        
+                                            <img
+                                                key={item.id}
+                                                src={image.s.u}
+                                                alt={item.caption}
+                                                 onClick={() => openEnlargedImage(image.s.u)}
+                                                style={{ maxWidth: '100%', height: 'auto', margin: '5px' }}
+                                            />
+                                        
+                                    );
+                                })}
+                            
+                        )}
+                    
+                    
+                        
+                            
+                                {post.score} points
+                            
+                            
+                                Comments
+                            
+                            
+                                {isSaved ? (
+                                    
+                                        Delete
+                                    
+                                ) : (
+                                    
+                                        Save
+                                    
+                                )}
+                            
+                        
+                    
+                
+            
+        );
     };
-    const handleSearchInputChange = async (event) => {
-        const query = event.target.value;
-        setSearchQuery(query);
 
-        if (query) {
-            try {
-                const response = await fetch(`https://www.reddit.com/search.json?q=${query}&limit=5`);
-                const data = await response.json();
-                setSearchResults(data.data.children);
-            } catch (error) {
-                console.error("Error fetching search results:", error);
+    const renderComment = (comment) => (
+        
+            
+                
+                    {comment.author}
+                
+                
+                    {new Date(comment.created_utc * 1000).toLocaleString()}
+                
+            
+            
+                {comment.body}
+                 {comment.url && (
+                            <a href={comment.url} target="_blank" rel="noopener noreferrer">
+                                {comment.domain}
+                            </a>
+                        )}
+                {comment.replies && comment.replies.data && comment.replies.data.children && (
+                    
+                        {comment.replies.data.children.map(reply => (
+                            renderComment(reply.data)
+                        ))}
+                    
+                )}
+                {comment.body && comment.body.includes('i.redd.it') ?
+                    
+                : null}
+            
+        
+    );
+     const performSearch = async (query) => {
+        try {
+            const response = await fetch(`https://www.reddit.com/search.json?q=${query}&limit=10`);
+            const data = await response.json();
+            if (data && data.data && data.data.children) {
+                setSearchResults(data.data.children.map(result => result.data));
+            } else {
+                setSearchResults([]);
             }
-        } else {
+        } catch (error) {
+            console.error('Search failed', error);
             setSearchResults([]);
         }
     };
-    const handleSearchResultClick = (post) => {
-        setSelectedSubreddit(`r/${post.data.subreddit}`);
-        setSearchPageVisible(false);
-        setSearchQuery('');
-        setSearchResults([]);
+     const openSearchPage = () => {
+        setSearchPageVisible(true);
     };
-    const renderPost = (post) => (
-        
-            
-                
-                    {post.data.title}
-                
-                
-                    {post.data.author} | {new Date(post.data.created_utc * 1000).toLocaleString()}
-                    {post.data.link_flair_text && (
-                         {post.data.link_flair_text}
-                    )}
-                
-            
-            
-                {post.data.thumbnail && (
-                     enlargeImage(post.data.thumbnail)}
-                        alt="Thumbnail"
-                    />
-                )}
-                {post.data.url_overridden_by_dest && (
-                    post.data.url_overridden_by_dest.match(/\.(jpeg|jpg|gif|png)$/) != null && (
-                         enlargeImage(post.data.url_overridden_by_dest)}
-                            alt="Thumbnail"
-                        />
-                    )
-                )}
-                
-                    {post.data.selftext && (
-                        
-                            {post.data.selftext}
-                        
-                    )}
-                    {post.data.media && post.data.media.reddit_video && (
-                        
-                            <source src={post.data.media.reddit_video.fallback_url} type="video/mp4" />
-                            Your browser does not support the video tag.
-                        
-                    )}
-					{post.data.url_overridden_by_dest && (
-						post.data.url_overridden_by_dest.includes("youtu.be") && (
-							
-								<iframe width="560" height="315" src={`https://www.youtube.com/embed/${post.data.url_overridden_by_dest.split('/').pop()}`} 
-										title="YouTube video player" frameborder="0" 
-										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-										allowFullScreen>
-								</iframe>
-							
-						)
-					)}
-					{post.data.url_overridden_by_dest && (
-						post.data.url_overridden_by_dest.includes("v.redd.it") && (
-							<video controls width="100%">
-								<source src={post.data.url_overridden_by_dest + "/HLSPlaylist.m3u8"} type="application/x-mpegURL" />
-								Your browser does not support HLS video.
-							</video>
-						)
-					)}
-                
-            
-            
-                
-                    View Comments
-                    {isPostSaved(post.data.id) ? 'Unsave' : 'Save'}
-                
-            
-        
-    );
+    const closeSearchPage = () => {
+        setSearchPageVisible(false);
+    };
     const renderPostFeed = () => (
         
-            {posts.map(post => (
-                renderPost(post)
-            ))}
-            {loadingPosts && Loading...}
+            {loadingPosts && !posts.length ? (
+                
+                    Loading posts...
+                
+            ) : (
+                
+                    {posts.map(post => (
+                        renderPost(post)
+                    ))}
+                    
+                        {loadingPosts ? 'Loading more posts...' : 'Load More Posts'}
+                    
+                
+            )}
         
     );
-	const renderComment = (comment) => (
-		
-			
-				
-					{comment.data.author}
-				
-				
-					{new Date(comment.data.created_utc * 1000).toLocaleString()}
-				
-			
-			
-				{comment.data.body && (
-					
-						{comment.data.body}
-					
-				)}
-				{comment.data.url && (
-					comment.data.url.match(/\.(jpeg|jpg|gif|png)$/) != null && (
-						 enlargeCommentImage(comment.data.url)} alt="Comment Image" />
-					)
-				)}
-			
-		
-	);
-    const renderPostPreview = () => (
+    const renderCommentsSection = () => (
         
             
                 
-                    {selectedPost.data.title}
-                
-                
-                    {selectedPost.data.author} | {new Date(selectedPost.data.created_utc * 1000).toLocaleString()}
-                
-            
-            
-                {selectedPost.data.thumbnail && (
-                     enlargeImage(selectedPost.data.thumbnail)}
-                        alt="Thumbnail"
-                    />
-                )}
-                {selectedPost.data.url_overridden_by_dest && (
-                    selectedPost.data.url_overridden_by_dest.match(/\.(jpeg|jpg|gif|png)$/) != null && (
-                         enlargeImage(selectedPost.data.url_overridden_by_dest)}
-                            alt="Thumbnail"
-                        />
-                    )
-                )}
-                
-                    {selectedPost.data.selftext && (
+                    Comments:
+                    {loadingComments && !comments.length ? (
                         
-                            {selectedPost.data.selftext}
+                            Loading comments...
+                        
+                    ) : (
+                        
+                            {comments.map(comment => (
+                                renderComment(comment)
+                            ))}
+                        
+                        
+                            {loadingComments ? 'Loading more comments...' : 'Load More Comments'}
                         
                     )}
-                    {selectedPost.data.media && selectedPost.data.media.reddit_video && (
-                        
-                            <source src={selectedPost.data.media.reddit_video.fallback_url} type="video/mp4" />
-                            Your browser does not support the video tag.
-                        
-                    )}
-					{selectedPost.data.url_overridden_by_dest && (
-						selectedPost.data.url_overridden_by_dest.includes("youtu.be") && (
-							
-								<iframe width="560" height="315" src={`https://www.youtube.com/embed/${selectedPost.data.url_overridden_by_dest.split('/').pop()}`} 
-										title="YouTube video player" frameborder="0" 
-										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-										allowFullScreen>
-								</iframe>
-							
-						)
-					)}
-					{selectedPost.data.url_overridden_by_dest && (
-						selectedPost.data.url_overridden_by_dest.includes("v.redd.it") && (
-							<video controls width="100%">
-								<source src={selectedPost.data.url_overridden_by_dest + "/HLSPlaylist.m3u8"} type="application/x-mpegURL" />
-								Your browser does not support HLS video.
-							</video>
-						)
-					)}
-                
-            
-            
-				
-					{comments.map(comment => (
-						renderComment(comment)
-					))}
-					{loadingComments && Loading...}
-				
-                
-                    Close
                 
             
         
     );
-    const renderEnlargedPostImages = () => (
-         closeEnlargedImage()} />
-    );
-    const renderEnlargedCommentImages = () => (
-         closeEnlargedImage()} />
+    const renderThemeSwitcher = () => (
+        
+            
+                Switch Theme
+            
+        
     );
     const renderErrorPopup = () => (
         
             
-                Error!
-                {errorMessage}
+                
+                    <h2>Error</h2>
+                    
+                        {errorMessage}
+                    
+                    
+                        <button onClick={closeErrorPopup}>Close</button>
+                    
+                
             
-            
-                OK
-            
-        
     );
     const renderDeleteSavedPostPopup = () => (
         
             
-                Delete Saved Post?
+                
+                    <h2>Delete Post</h2>
+                    
+                        Are you sure you want to delete this post?
+                    
+                    
+                        <button onClick={confirmDeletePost}>Yes, Delete</button>
+                        <button onClick={cancelDeletePost}>Cancel</button>
+                    
+                
             
+    );
+     const renderEnlargedPostImages = () => (
+        
             
-                Are you sure you want to delete this saved post?
-            
-            
-                Cancel
-                Delete
+                
             
         
     );
-    const renderSidebar = () => (
+    const renderEnlargedCommentImages = () => (
+        
+            
+                
+            
+        
+    );
+    const openEnlargedImage = (imageUrl) => {
+        setEnlargedImage(imageUrl);
+    };
+    const closeEnlargedImage = () => {
+        setEnlargedImage(null);
+    };
+    return (
         
             
                 
                     
                         
+                            Zennit
+                        
+                        
                             
-                                 removeSubreddit(subreddit.name)}>{subreddit.name}
+                                <button id="sidebar-toggle" onClick={toggleSidebar}>
+                                    ☰
+                                </button>
                             
-                        ))
-                    }
+                            
+                                 openSearchPage()}
+                                />
+                            
+                            {renderThemeSwitcher()}
+                        
+                    
                 
                 
                     
-                        <input
-                            type="text"
-                            className="subreddit-input"
-                            placeholder="Enter subreddit (e.g., funny)"
-                            onKeyDown={addSubreddit}
-                        />
+                        <h2>Subreddits</h2>
+                        
+                            
+                                <a
+                                    key={subreddit.name}
+                                    href="#"
+                                    className={selectedSubreddit === subreddit.name ? 'active' : ''}
+                                    onClick={() => selectSubreddit(subreddit.name)}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        removeSubreddit(subreddit.name)}
+                                    }
+                                >
+                                    {subreddit.name}
+                                
+                            ))
+                        }
+                    
+                    
+                        
+                            <input
+                                type="text"
+                                className="subreddit-input"
+                                placeholder="Enter subreddit (e.g., funny)"
+                                onKeyDown={addSubreddit}
+                            />
+                        
                     
                 
             
-        
-    );
-    const renderSearchPage = () => (
-        
             
                 
-                    <input
-                        type="text
+                    {selectedPostId ? (
+                        renderCommentsSection()
+                    ) :  (
+                        searchPageVisible ? (
+                            
+                                
+                                    
+                                        
+                                            
+                                                
+                                                    <input
+                                                        type="text"
+                                                        className="search-input"
+                                                        placeholder="Search Reddit"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                performSearch(e.target.value);
+                                                            }
+                                                        }}
+                                                    />
+                                                
+                                                
+                                                    {searchResults.map(post => (
+                                                        
+                                                            
+                                                                {post.title}
+                                                            
+                                                        
+                                                    ))}
+                                                
+                                            
+                                        
+                                        
+                                            Close
+                                        
+                                    
+                                ) : (
+                                    renderPostFeed()
+                                )
+                            )}
+                
+                {enlargedImage && (renderEnlargedPostImages())}
+                {enlargedCommentImage && (renderEnlargedCommentImages())}
+            
+            {showErrorPopup && renderErrorPopup()}
+            {showDeletePopup && (renderDeleteSavedPostPopup())}
+            {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+        
+    )
+}
+
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+root.render(<App />);
