@@ -1,4 +1,5 @@
 const { useState, useEffect, useRef } = React;
+const { createRoot } = ReactDOM;
 
 const App = () => {
     const [contentBlockerDetected, setContentBlockerDetected] = useState(false);
@@ -33,13 +34,21 @@ const App = () => {
     const [viewingSaved, setViewingSaved] = useState(false);
     const [postToDelete, setPostToDelete] = useState(null);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [editMode, setEditMode] = useState(false); // New state for edit mode
+    const [editMode, setEditMode] = useState(false);
 
     
 
     const fetchPosts = (page = 0) => {
         setLoadingPosts(true);
-        fetch(`https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}`)
+        let fetchUrl;
+        if (selectedSubreddit.startsWith('u/')) {
+            const username = selectedSubreddit.substring(2);
+            fetchUrl = `https://www.reddit.com/user/${username}/submitted/${sort}.json?count=${(page - 1) * 25}`;
+        } else {
+            fetchUrl = `https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}`;
+        }
+    
+        fetch(fetchUrl)
             .then(response => {
                 if (!response.ok) {
                     setContentBlockerDetected(true);
@@ -61,11 +70,10 @@ const App = () => {
                     pinned: child.data.stickied,
                     ups: child.data.ups - child.data.downs
                 }));
-
+    
                 setPosts(prevPosts => [...fetchedPosts]);
                 setContentBlockerDetected(false);
             })
-        
             .catch(error => {
                 console.error('Fetch error:', error);
                 setContentBlockerDetected(true);
@@ -77,8 +85,15 @@ const App = () => {
 
     const fetchComments = (postId) => {
         setLoadingComments(true);
-        fetch(`https://www.reddit.com/${selectedSubreddit}/comments/${postId}.json?sort=${commentSort}`)
-            .then(response => response.json())
+        const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
+        const subredditToUse = post.subreddit;
+        fetch(`https://www.reddit.com/${subredditToUse}/comments/${postId}.json?sort=${commentSort}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 const postTitle = data[0].data.children[0].data.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
                 const fetchedComments = data[1].data.children.map(child => {
@@ -105,6 +120,7 @@ const App = () => {
     
                     return { ...commentData, isVisible: true };
                 });
+    
                 setComments(fetchedComments);
                 setCommentVisibility(new Array(fetchedComments.length).fill(true));
             })
@@ -197,8 +213,20 @@ const App = () => {
     };
 
     const addSubreddit = () => {
-        if (newSubreddit && !subreddits.some(sub => sub.name === newSubreddit)) {
-            setSubreddits([...subreddits, { name: newSubreddit }]);
+        if (newSubreddit) {
+            let formattedSubreddit = newSubreddit.trim();
+            if (formattedSubreddit.startsWith('user/') && formattedSubreddit.includes('/m/')) {
+                const multiRedditName = formattedSubreddit.split('/m/')[1];
+                setSubreddits([...subreddits, { name: multiRedditName, original: formattedSubreddit }]);
+            } else if (formattedSubreddit.startsWith('u/') && !formattedSubreddit.includes('/m/')) {
+                setSubreddits([...subreddits, { name: formattedSubreddit }]);
+            } else {
+                if (!formattedSubreddit.startsWith('r/')) {
+                    formattedSubreddit = 'r/' + formattedSubreddit;
+                }
+                setSubreddits([...subreddits, { name: formattedSubreddit }]);
+            }
+    
             setNewSubreddit('');
         }
     };
@@ -232,10 +260,13 @@ const App = () => {
             <div className="flex items-center mt-2 cursor-pointer" key={index}>
                 <div 
                     className="ml-2 text-white" 
-                    onClick={() => setSelectedSubreddit(subreddit.name)}
+                    onClick={() => {
+                        const subredditToFetch = subreddit.original ? subreddit.original : subreddit.name;
+                        setSelectedSubreddit(subredditToFetch);
+                        setSidebarOpen(false);}}
                     onContextMenu={(e) => handleRightClick(e, subreddit.name)}
                 >
-                    {subreddit.name}
+                    {subreddit.original ? `m/${subreddit.name}` : subreddit.name}
                 </div>
                 {editMode && (
                     <button 
@@ -288,7 +319,7 @@ const App = () => {
 
     const Toast = ({ message, onClose }) => {
         useEffect(() => {
-            const timer = setTimeout(onClose, 3000); // Automatically close after 3 seconds
+            const timer = setTimeout(onClose, 3000);
             return () => clearTimeout(timer);
         }, [onClose]);
     
@@ -312,30 +343,24 @@ const App = () => {
     };
 
     const renderFormattedText = (text) => {
-        // Check if text is valid
         if (!text || typeof text !== 'string') {
             return null;
         }
     
         let formattedText = text;
-    
-        // Sanitize text
         formattedText = formattedText.replace(/\\/g, '');
         formattedText = formattedText.replace(/\n\n+/g, '\n');
-    
-        // Handle links
+
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
-    
-        // Handle preview Reddit images
+
         const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
         formattedText = formattedText.replace(previewRedditRegex, (match) => {
             return `<img src="${match}" alt="Comment embedded content" class="mt-2 rounded" height="30%" width="30%" />`;
         });
     
-        // Handle inline formatting
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
             { regex: /\^(\S+)/g, tag:'sup' },
@@ -348,7 +373,6 @@ const App = () => {
             });
         });
     
-        // Handle markdown formatting
         const markdownRegex = [
             { regex: /(\*\*\*|___)(.*?)\1/g, tag:'strong', className: 'italic' },
             { regex: /(\*\*|__)(.*?)\1/g, tag:'strong' },
@@ -361,14 +385,12 @@ const App = () => {
             });
         });
     
-        // Handle code blocks
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
         formattedText = formattedText.replace(codeBlockRegex, (match, p1) => {
             const codeContent = p1.replace(/^ {4}/gm, '');
             return `<pre>${codeContent}</pre>`;
         });
     
-        // Replace newlines with <br/>
         formattedText = formattedText.replace(/\n/g, '<br/>');
     
         return <span dangerouslySetInnerHTML={{ __html: formattedText }} />;
@@ -387,6 +409,29 @@ const App = () => {
         }
         return null;
     };
+
+    const sharePost = (url) => {
+        if (!url.startsWith('https://')) {
+            url = `https://www.reddit.com${url}`;
+        }
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this post on Reddit',
+                url: url
+            }).then(() => {
+                console.log('Post shared successfully');
+            }).catch((error) => {
+                console.error('Error sharing the post:', error);
+            });
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                setToastMessage('Post link copied to clipboard!');
+            }).catch((error) => {
+                console.error('Could not copy text: ', error);
+            });
+        }
+    };
+
     const Comment = ({ comment, saveComment  }) => {
         const [isVisible, setIsVisible] = useState(true);
         
@@ -472,7 +517,11 @@ const App = () => {
                             <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Reddit Icon" className="w-8 h-8" />
                         </button>
                         <div className="ml-2">
-                            <div className="text-white text-xl sm:text-2xl">{selectedSubreddit}</div>
+                            <div className="text-white text-xl sm:text-2xl">
+                                {selectedSubreddit.startsWith('user/') && selectedSubreddit.includes('/m/') 
+                                    ? `m/${selectedSubreddit.split('/m/')[1]}`
+                                    : selectedSubreddit}
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center">
@@ -509,7 +558,6 @@ const App = () => {
                             <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
                                 {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
                                 <span>{selectedPost.title}</span>
-                                <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}><i class="fas fa-bookmark inactive" id="bookmarkIcon"></i></button>
                                 <span className="text-gray-400 ml-2 flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {selectedPost.ups} upvotes
@@ -519,8 +567,19 @@ const App = () => {
                                 <span>by {selectedPost.author}</span>
                                 <span>{formatDate(selectedPost.created_utc)}</span>
                             </div>
-                            <div className="text-white bg-gray-700 p-2 rounded mt-1">{renderFormattedText(selectedPost.content)}</div>
-                            {renderPostContent(selectedPost)}
+                            <div className="text-white bg-gray-700 p-2 rounded mt-1">
+                                {renderFormattedText(selectedPost.content)}
+                                {renderPostContent(selectedPost)}
+                            </div>
+                            <div className="flex items-center mt-4">
+                                <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
+                                    <i className="fas fa-share-alt"></i> Share Post
+                                </button>
+                                <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}>
+                                    <i class="fas fa-bookmark inactive" id="bookmarkIcon"></i> Save Post
+                                </button>
+
+                            </div>
                             <div className="flex items-center justify-between mt-4">
                                 <div className="flex items-center">
                                     <select className="p-2 bg-gray-700 text-white rounded" value={commentSort} onChange={(e) => { setCommentSort(e.target.value); fetchComments(selectedPost.id); }}>
@@ -595,4 +654,6 @@ const App = () => {
     )
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+root.render(<App />);
