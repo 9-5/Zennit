@@ -6,11 +6,11 @@ const App = () => {
     const [loadingComments, setLoadingComments] = useState(false);
     const [subreddits, setSubreddits] = useState(() => {
         const savedSubreddits = localStorage.getItem('subreddits');
-        return savedSubreddits ? JSON.parse(savedSubreddits) : [{ name: 'r/technology' }];
+        return savedSubreddits ? JSON.parse(savedSubreddits) : [{ name: 'r/Zennit' }];
     });
     const [selectedSubreddit, setSelectedSubreddit] = useState(() => {
         const savedSubreddit = localStorage.getItem('selectedSubreddit');
-        return savedSubreddit ? savedSubreddit : 'r/technology';
+        return savedSubreddit ? savedSubreddit : 'r/Zennit';
     });
     const [posts, setPosts] = useState([]);
     const [selectedPost, setSelectedPost] = useState(null);
