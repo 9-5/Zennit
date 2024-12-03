@@ -100,7 +100,7 @@ const App = () => {
         } else if (upvotes >= 1000) {
             return `${(upvotes / 1000).toFixed(1)}K`;
         }
-        return upvotes.toString(); // Return as string for consistency
+        return upvotes.toString();
     };
 
     const fetchComments = (postId) => {
@@ -373,12 +373,17 @@ const App = () => {
             </div>
         );
     };
+    const decodeHtmlEntities = (text) => {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        return textarea.value;
+    };
 
     const renderFormattedText = (text) => {
         if (!text || typeof text !== 'string') {
             return null;
         }
-
+        
         let formattedText = text;
         formattedText = formattedText.replace(/\\/g, '');
         formattedText = formattedText.replace(/\n\n+/g, '\n');
@@ -390,7 +395,13 @@ const App = () => {
             imageUrls.push(decodedUrl);
             return '';
         });
-    
+        
+
+        formattedText = formattedText.replace(/^\s*&gt;\s*(.+)$/gm, (match, content) => {
+            console.log("Matched blockquote content:", content); // Debugging line
+            return `<blockquote style="border-left: 4px solid #ccc; padding-left: 10px; color: #999;">${content.trim()}</blockquote>`;
+        });
+
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
@@ -441,7 +452,6 @@ const App = () => {
         });
     
         formattedText = formattedText.replace(/\n/g, '<br/>');
-        
         return (
             <div>
                 <span dangerouslySetInnerHTML={{ __html: formattedText }} />
@@ -736,7 +746,7 @@ const App = () => {
                         <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
                             <div className="flex justify-between items-center">
                                 <div className="flex-1 overflow-hidden">
-                                    <span className="text-white whitespace-normal">{post.title.replace(/&amp;/g, '&')}</span>
+                                    <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}{post.title.replace(/&amp;/g, '&')}</span>
                                 </div>
                                 <div className="text-gray-400 ml-4 flex-shrink-0">
                                     <span className="flex items-center">
