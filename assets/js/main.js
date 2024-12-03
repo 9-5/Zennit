@@ -398,7 +398,6 @@ const App = () => {
         
 
         formattedText = formattedText.replace(/^\s*&gt;\s*(.+)$/gm, (match, content) => {
-            console.log("Matched blockquote content:", content); // Debugging line
             return `<blockquote style="border-left: 4px solid #ccc; padding-left: 10px; color: #999;">${content.trim()}</blockquote>`;
         });
 
