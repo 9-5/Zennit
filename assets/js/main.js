@@ -94,6 +94,15 @@ const App = () => {
             });
     };
 
+    const formatUpvotes = (upvotes) => {
+        if (upvotes >= 100000) {
+            return `${Math.floor(upvotes / 1000)}K`;
+        } else if (upvotes >= 1000) {
+            return `${(upvotes / 1000).toFixed(1)}K`;
+        }
+        return upvotes.toString(); // Return as string for consistency
+    };
+
     const fetchComments = (postId) => {
         setLoadingComments(true);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
@@ -179,34 +188,33 @@ const App = () => {
     
     const renderSavedPosts = () => {
         return savedPosts.map((post, index) => (
-            <div className="mb-4" key={index}>
-                <div className="text-white bg-gray-700 p-2 rounded mt-1 flex justify-between items-center">
-                    <div className="flex items-center" onClick={() => viewPost(post.id)}>
-                        <span>{post.title}</span>
-                        <button className="ml-4 p-2 bg-gray-700 text-white rounded">View Post</button>
+            <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                <div className="flex justify-between items-center">
+                    <div className="flex-1 overflow-hidden">
+                        <span className="text-white whitespace-normal">{post.title.replace(/&amp;/g, '&')}</span>
                     </div>
-                    {editMode && (
-                        <button 
-                            className="text-red-500 ml-2" 
-                            onClick={() => {
-                                setPostToDelete(post);
-                                setShowDeletePopup(true);
-                            }}
-                        >
-                            <i className="fas fa-times"></i>
-                        </button>
-                    )}
+                    <div className="text-gray-400 ml-4 flex-shrink-0">
+                        <span className="flex items-center">
+                            <i className="fas fa-arrow-up mr-1"></i>
+                            {formatUpvotes(post.ups)}
+                        </span>
+                    </div>
+                    <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => viewPost(post.id)}>
+                        View Post
+                    </button>
+                </div>
+                <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                    <span>by {post.author}</span>
+                    <span>{formatDate(post.created_utc)}</span>
                 </div>
             </div>
         ));
     };
 
-
     useEffect(() => {
         setPosts([]);
         fetchPosts(currentPage);
     }, [selectedSubreddit, sort]);
-
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
@@ -413,11 +421,11 @@ const App = () => {
         ];
 
         formattedText = formattedText.replace(/(^|\n)(- .+)/g, (match, p1, p2) => {
-            return `${p1}<div style="margin-left: 20px;">• ${p2.slice(2)}</div>`; // Use bullet point with indent
+            return `${p1}<div style="margin-left: 20px;">• ${p2.slice(2)}</div>`;
         });
 
         formattedText = formattedText.replace(/(^|\n)(\d+\.\s.+)/g, (match, p1, p2) => {
-            return `${p1}<div style="margin-left: 20px;">${p2}</div>`; // Use numbered item with indent
+            return `${p1}<div style="margin-left: 20px;">${p2}</div>`;
         });
 
         markdownRegex.forEach(({ regex, tag, className }) => {
@@ -554,7 +562,7 @@ const App = () => {
                 </div>
                 {isVisible && (
                     <div>
-                        <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {comment.ups} upvotes</span>
+                        <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {formatUpvotes(comment.ups)} upvotes</span>
                         <div>{renderFormattedText(comment.body)}</div>
 
                         {comment.replies && comment.replies.length > 0 && (
@@ -598,9 +606,25 @@ const App = () => {
                         className="w-full p-2 bg-gray-800 text-white rounded"
                         value={newSubreddit}
                         onChange={(e) => setNewSubreddit(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                addSubreddit();
+                            }
+                        }}
                     />
                     <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={addSubreddit}>Add Subreddit</button>
                 </div>
+                {showPopup && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-gray-800 p-4 rounded">
+                        <div className="text-white mb-4">Do you want to delete {subredditToDelete}?</div>
+                        <div className="flex justify-end">
+                            <button className="p-2 bg-gray-700 text-white rounded mr-2" onClick={confirmDelete}>Yes</button>
+                            <button className="p-2 bg-gray-700 text-white rounded" onClick={cancelDelete}>No</button>
+                        </div>
+                    </div>
+                </div>
+                )}
             </div>
             <div className="flex-1 bg-gray-800 p-4 flex flex-col">
             {contentBlockerDetected && (
@@ -660,10 +684,10 @@ const App = () => {
                         <div>
                             <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
                                 {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
-                                <span>{selectedPost.title}</span>
+                                <span>{selectedPost.title.replace(/&amp;/g, '&')}</span>
                                 <span className="text-gray-400 ml-2 flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
-                                    {selectedPost.ups} upvotes
+                                    {formatUpvotes(selectedPost.ups)} upvotes
                                 </span>
                             </div>
                             <div className="text-gray-400 text-sm mt-1 flex justify-between">
@@ -708,26 +732,29 @@ const App = () => {
                         <button className="mt-4 p-2 bg-gray-700 text-white rounded" onClick={() => setSelectedPost(null)}>Back to Posts</button>
                     </div>
                 ) : (
-                        posts.map((post, index) => (
-                            <div className="mb-4" key={index}>
-                                <div className="text-white bg-gray-700 p-2 rounded mt-1 flex justify-between items-center">
-                                    <div className="flex items-center">
-                                        {post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
-                                        <span>{post.title}</span>
-                                        <span className="text-gray-400 ml-2 flex items-center">
+                    posts.map((post, index) => (
+                        <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                            <div className="flex justify-between items-center">
+                                <div className="flex-1 overflow-hidden">
+                                    <span className="text-white whitespace-normal">{post.title.replace(/&amp;/g, '&')}</span>
+                                </div>
+                                <div className="text-gray-400 ml-4 flex-shrink-0">
+                                    <span className="flex items-center">
                                         <i className="fas fa-arrow-up mr-1"></i>
-                                        {post.ups}
-                                        </span>
-                                    </div>
-                                    <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => viewPost(post.id)}>View Post</button>
+                                        {formatUpvotes(post.ups)}
+                                    </span>
                                 </div>
-                                <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                                    <span>by {post.author}</span>
-                                    <span>{formatDate(post.created_utc)}</span>
-                                </div>
+                                <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => viewPost(post.id)}>
+                                    View Post
+                                </button>
                             </div>
-                        ))
-                    )}
+                            <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                                <span>by {post.author}</span>
+                                <span>{formatDate(post.created_utc)}</span>
+                            </div>
+                        </div>
+                    ))
+                )}
                 </div>
                 {enlargedImage && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
@@ -740,17 +767,6 @@ const App = () => {
                     </div>
                 )}
             </div>
-            {showPopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-gray-800 p-4 rounded">
-                        <div className="text-white mb-4">Do you want to delete {subredditToDelete}?</div>
-                        <div className="flex justify-end">
-                            <button className="p-2 bg-gray-700 text-white rounded mr-2" onClick={confirmDelete}>Yes</button>
-                            <button className="p-2 bg-gray-700 text-white rounded" onClick={cancelDelete}>No</button>
-                        </div>
-                    </div>
-                </div>
-            )}
             {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-gray-800 p-4 rounded">
