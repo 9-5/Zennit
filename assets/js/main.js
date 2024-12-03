@@ -36,9 +36,16 @@ const App = () => {
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState(null);
+    const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
 
 
-    
+    const handleImageClick = (src) => {
+        setEnlargedImage(src);
+    };
+
+    const handleCloseImage = () => {
+        setEnlargedImage(null);
+    };
 
     const fetchPosts = (page = 0) => {
         setLoadingPosts(true);
@@ -337,13 +344,6 @@ const App = () => {
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
 
-        const handleImageClick = (src) => {
-            setEnlargedImage(src);
-        };
-
-        const handleCloseImage = () => {
-            setEnlargedImage(null);
-        };
     
         const items = post.gallery_data.items.map(item => {
             const media = post.media_metadata[item.media_id];
@@ -362,11 +362,6 @@ const App = () => {
         return (
             <div className="overflow-x-auto whitespace-nowrap flex">
                 {items}
-                {enlargedImage && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
-                        <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-full" />
-                    </div>
-                )}
             </div>
         );
     };
@@ -375,24 +370,33 @@ const App = () => {
         if (!text || typeof text !== 'string') {
             return null;
         }
-    
+
         let formattedText = text;
         formattedText = formattedText.replace(/\\/g, '');
         formattedText = formattedText.replace(/\n\n+/g, '\n');
-
+    
+        const imageUrls = [];
+        const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
+        formattedText = formattedText.replace(previewRedditRegex, (match) => {
+            const decodedUrl = match.replace(/&amp;/g, '&');
+            imageUrls.push(decodedUrl);
+            return '';
+        });
+    
+        formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
+            const level = hashes.length;
+            const fontSize = `${(6 - level) * 0.25 + 1}em`;
+            return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
+        });
+        
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
 
-        const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
-        formattedText = formattedText.replace(previewRedditRegex, (match) => {
-            return `<img src="${match}" alt="Comment embedded content" class="mt-2 rounded" height="30%" width="30%" />`;
-        });
-    
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
-            { regex: /\^(\S+)/g, tag:'sup' },
+            { regex: /\^(\S+)/g, tag: 'sup' },
             { regex: /`(.*?)`/g, tag: 'code' }
         ];
     
@@ -403,11 +407,19 @@ const App = () => {
         });
     
         const markdownRegex = [
-            { regex: /(\*\*\*|___)(.*?)\1/g, tag:'strong', className: 'italic' },
-            { regex: /(\*\*|__)(.*?)\1/g, tag:'strong' },
+            { regex: /(\*\*\*|___)(.*?)\1/g, tag: 'strong', className: 'italic' },
+            { regex: /(\*\*|__)(.*?)\1/g, tag: 'strong' },
             { regex: /(\*|_)(.*?)\1/g, tag: 'em' }
         ];
-    
+
+        formattedText = formattedText.replace(/(^|\n)(- .+)/g, (match, p1, p2) => {
+            return `${p1}<div style="margin-left: 20px;">• ${p2.slice(2)}</div>`; // Use bullet point with indent
+        });
+
+        formattedText = formattedText.replace(/(^|\n)(\d+\.\s.+)/g, (match, p1, p2) => {
+            return `${p1}<div style="margin-left: 20px;">${p2}</div>`; // Use numbered item with indent
+        });
+
         markdownRegex.forEach(({ regex, tag, className }) => {
             formattedText = formattedText.replace(regex, (match, p1, p2) => {
                 return `<${tag} class="${className || ''}">${p2}</${tag}>`;
@@ -421,9 +433,45 @@ const App = () => {
         });
     
         formattedText = formattedText.replace(/\n/g, '<br/>');
-    
-        return <span dangerouslySetInnerHTML={{ __html: formattedText }} />;
+        
+        return (
+            <div>
+                <span dangerouslySetInnerHTML={{ __html: formattedText }} />
+                {imageUrls.map((url, index) => (
+                    <img
+                        key={index}
+                        src={url}
+                        alt="Comment embedded content"
+                        className="mt-2 rounded cursor-pointer"
+                        height="30%"
+                        width="30%"
+                        onClick={() => setEnlargedCommentImage(url)}
+                    />
+                ))}
+            </div>
+        );
     };
+
+    const handleCloseCommentImage = () => {
+        setEnlargedCommentImage(null);
+    };
+    
+    const handleClickOutsideCommentImage = (event) => {
+        if (enlargedCommentImage && !event.target.classList.contains('comment-image')) {
+            handleCloseCommentImage();
+        }
+    };
+    
+    useEffect(() => {
+        if (enlargedCommentImage) {
+            document.addEventListener('mousedown', handleClickOutsideCommentImage);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutsideCommentImage);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideCommentImage);
+        };
+    }, [enlargedCommentImage]);
 
     const renderPostContent = (post) => {
         if (post.media && post.media.reddit_video) {
@@ -452,7 +500,14 @@ const App = () => {
         } else if (post.url && !post.url.includes("/comments/")) {
             const isRedditUrl = post.url.includes("reddit.com") || post.url.includes("redd.it");
             return isRedditUrl ? (
-                <img src={post.url} alt="Post content" className="mt-2 rounded max-w-full" height="30%" width="30%" />
+                <img 
+                    src={post.url} 
+                    alt="Post content" 
+                    className="mt-2 rounded max-w-full cursor-pointer" 
+                    height="30%" 
+                    width="30%" 
+                    onClick={() => handleImageClick(post.url)}
+                />
             ) : (
                 <a href={post.url} className="text-blue-500 underline mt-2 block">{post.url}</a>
             );
@@ -482,13 +537,13 @@ const App = () => {
         }
     };
 
-    const Comment = ({ comment, saveComment  }) => {
+    const Comment = ({ comment }) => {
         const [isVisible, setIsVisible] = useState(true);
         
         const toggleVisibility = () => {
             setIsVisible(!isVisible);
         };
-
+    
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
                 <div className="flex items-center text-gray-400 text-sm">
@@ -501,9 +556,7 @@ const App = () => {
                     <div>
                         <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {comment.ups} upvotes</span>
                         <div>{renderFormattedText(comment.body)}</div>
-                        {comment.media_metadata && comment.media_metadata.length > 0 && (
-                            <img src={comment.media_metadata[0].s.u} alt="Comment embedded content" className="mt-2 rounded" height="30%" width="30%" />
-                        )}
+
                         {comment.replies && comment.replies.length > 0 && (
                             <div className="ml-4">
                                 {comment.replies.map((reply, index) => (
@@ -676,6 +729,16 @@ const App = () => {
                         ))
                     )}
                 </div>
+                {enlargedImage && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
+                        <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-full" />
+                    </div>
+                )}
+                {enlargedCommentImage && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseCommentImage}>
+                        <img src={enlargedCommentImage} alt="Enlarged Comment" className="max-w-full max-h-full" />
+                    </div>
+                )}
             </div>
             {showPopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
