@@ -207,6 +207,18 @@ const App = () => {
                     <span>by {post.author}</span>
                     <span>{formatDate(post.created_utc)}</span>
                 </div>
+                {editMode && (
+                        <button 
+                            className="text-red-500 ml-2" 
+                            onClick={() => {
+                                setPostToDelete(post);
+                                setShowDeletePopup(true);
+                            }}
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+                    )
+                }
             </div>
         ));
     };
@@ -315,7 +327,18 @@ const App = () => {
 
     const formatDate = (timestamp) => {
         const date = new Date(timestamp * 1000);
-        return date.toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const userLocale = navigator.language || 'en-US';
+        const formattedDate = date.toLocaleDateString(userLocale, { 
+            year: '2-digit', 
+            month: '2-digit', 
+            day: '2-digit' 
+        });
+        const formattedTime = date.toLocaleTimeString(userLocale, { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false
+        });
+        return `${formattedDate} ${formattedTime}`;
     };
 
     const handleTouchStart = (e) => {
@@ -696,30 +719,33 @@ const App = () => {
                         </div>
                     ) : selectedPost ? (
                         <div>
-                            <div className="text-white bg-gray-700 p-2 rounded mt-1 flex items-center">
-                                {selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}
-                                <span>{selectedPost.title.replace(/&amp;/g, '&')}</span>
-                                <span className="text-gray-400 ml-2 flex items-center">
-                                    <i className="fas fa-arrow-up mr-1"></i>
-                                    {formatUpvotes(selectedPost.ups)} upvotes
-                                </span>
-                            </div>
-                            <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                                <span>by {selectedPost.author}</span>
-                                <span>{formatDate(selectedPost.created_utc)}</span>
+                            <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <span className="whitespace-normal">{selectedPost.title.replace(/&amp;/g, '&')}</span>
+                                    </div>
+                                    <div className="text-gray-400 ml-4 flex-shrink-0">
+                                        <span className="flex items-center">
+                                            <i className="fas fa-arrow-up mr-1"></i>
+                                            {formatUpvotes(selectedPost.ups)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                                    <span>by {selectedPost.author}</span>
+                                    <span>{formatDate(selectedPost.created_utc)}</span>
+                                </div>
                             </div>
                             <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                                {renderFormattedText(selectedPost.content)}
-                                {renderPostContent(selectedPost)}
-                            </div>
-                            <div className="flex items-center mt-4">
+                                    {renderFormattedText(selectedPost.content)}
+                                    {renderPostContent(selectedPost)}
+                            
                                 <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
-                                    <i className="fas fa-share-alt"></i> Share Post
+                                    <i className="fas fa-share-alt"></i>  Share Post
                                 </button>
                                 <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}>
-                                    <i class="fas fa-bookmark inactive" id="bookmarkIcon"></i> Save Post
+                                    <i class="fas fa-bookmark active" id="bookmarkIcon"></i>  Save Post
                                 </button>
-
                             </div>
                             <div className="flex items-center justify-between mt-4">
                                 <div className="flex items-center">
