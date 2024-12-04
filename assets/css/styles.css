@@ -2,6 +2,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #1e1e1e;
     color: #ffffff;
+    white-space: normal;
 }
 ::-webkit-scrollbar {
     display: none;
@@ -56,6 +57,21 @@ pre {
     background-color: #4b5563;
 }
 
+a {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+span {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
 button {
     margin-left: 10px;
 }
@@ -108,3 +124,4 @@ blockquote {
         background: rgba(33, 31, 55, 0.5); 
     }
 }
+
