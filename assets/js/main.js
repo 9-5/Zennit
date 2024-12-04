@@ -5,14 +5,8 @@ const App = () => {
     const [contentBlockerDetected, setContentBlockerDetected] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(false);
     const [loadingComments, setLoadingComments] = useState(false);
-    const [subreddits, setSubreddits] = useState(() => {
-        const savedSubreddits = localStorage.getItem('subreddits');
-        return savedSubreddits ? JSON.parse(savedSubreddits) : [{ name: 'r/Zennit' }];
-    });
-    const [selectedSubreddit, setSelectedSubreddit] = useState(() => {
-        const savedSubreddit = localStorage.getItem('selectedSubreddit');
-        return savedSubreddit ? savedSubreddit : 'r/Zennit';
-    });
+    const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
+    const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
     const [posts, setPosts] = useState([]);
     const [selectedPost, setSelectedPost] = useState(null);
     const [comments, setComments] = useState([]);
@@ -25,12 +19,8 @@ const App = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const sidebarRef = useRef(null);
     const [commentVisibility, setCommentVisibility] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [hasMorePosts, setHasMorePosts] = useState(true);
-    const [savedPosts, setSavedPosts] = useState(() => {
-        const saved = localStorage.getItem('savedPosts');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [currentPage] = useState(1);
+    const [savedPosts, setSavedPosts] = useState(JSON.parse(localStorage.getItem('savedPosts') || '[]'));
     const [viewingSaved, setViewingSaved] = useState(false);
     const [postToDelete, setPostToDelete] = useState(null);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -38,11 +28,12 @@ const App = () => {
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [touchStartX, setTouchStartX] = useState(null);
+    const [touchEndX, setTouchEndX] = useState(null);
 
 
 
     // Main functions.
-    const fetchPosts = (page = 0) => {
+    const fetchPosts = (page) => {
         setLoadingPosts(true);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
@@ -404,36 +395,6 @@ const App = () => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
     }, [subreddits]);
 
-    
-
-    const handleTouchStart = (e) => {
-        const touch = e.touches[0];
-        setTouchStartX(touch.clientX);
-    };
-
-    const handleTouchMove = (e) => {
-        if (!touchStartX) return;
-        const touch = e.touches[0];
-        const touchEndX = touch.clientX;
-        const touchDiff = touchEndX - touchStartX;
-
-        if (touchDiff > 50) {
-            setSelectedPost(null);
-        }
-    };
-
-    const Toast = ({ message, onClose }) => {
-        useEffect(() => {
-            const timer = setTimeout(onClose, 3000);
-            return () => clearTimeout(timer);
-        }, [onClose]);
-    
-        return (
-            <div className="fixed bottom-4 right-4 bg-green-500 text-white p-2 rounded shadow-lg">
-                {message}
-            </div>
-        );
-    };
 
 
     // Function to render posts and support functions
@@ -861,8 +822,40 @@ const App = () => {
 
 
 
+    // Miscellaneous functions
+    const Toast = ({ message, onClose }) => {
+        useEffect(() => {
+            const timer = setTimeout(onClose, 3000);
+            return () => clearTimeout(timer);
+        }, [onClose]);
+    
+        return (
+            <div className="fixed bottom-4 right-4 bg-green-500 text-white p-2 rounded shadow-lg">
+                {message}
+            </div>
+        );
+    };
+
+    const handleTouchMove = (e) => {
+        const touch = e.touches[0];
+        setTouchEndX(touch.clientX);
+    };
+    
+    const handleTouchEnd = () => {
+        if (touchStartX === null || touchEndX === null) return;
+        const touchDiff = touchEndX - touchStartX;
+        if (touchDiff > 50) {
+            setSidebarOpen(true);
+        }
+        if (touchDiff < -50 && selectedPost) {
+            setSelectedPost(null);
+        }
+        setTouchStartX(null);
+        setTouchEndX(null);
+    };
+
     return (
-        <div className="flex h-screen">
+        <div className="flex h-screen" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
             <div>
                 {renderSidebar()}
                 {showPopup && (renderSubredditDeletePopup())}
@@ -870,7 +863,7 @@ const App = () => {
             <div className="flex-1 bg-gray-800 p-4 flex flex-col">
                 {contentBlockerDetected && (renderContentBlocked())}
                 {renderPageHeader()}
-                <div className="flex-1 overflow-y-auto" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
+                <div className="flex-1 overflow-y-auto">
                     {loadingPosts && (renderLoadingSpinner())}
                     {viewingSaved ? (renderViewSavedPost()) : selectedPost ? (renderSelectedPost()) : (renderPostFeed())}
                 </div>
