@@ -836,6 +836,11 @@ const App = () => {
         );
     };
 
+    const handleTouchStart = (e) => {
+        const touch = e.touches[0];
+        setTouchStartX(touch.clientX);
+    };
+    
     const handleTouchMove = (e) => {
         const touch = e.touches[0];
         setTouchEndX(touch.clientX);
