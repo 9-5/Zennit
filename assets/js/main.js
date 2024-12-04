@@ -295,7 +295,7 @@ const App = () => {
                             setShowPopup(true);
                         }}
                     >
-                        <i className="fas fa-times"></i> {/* Red X icon */}
+                        <i className="fas fa-times"></i>
                     </button>
                 )}
             </div>
@@ -395,18 +395,23 @@ const App = () => {
             imageUrls.push(decodedUrl);
             return '';
         });
-        
+
+        const spoilerRegex = /(&gt;!)?(.*?)!(&lt;)/g;
+        formattedText = formattedText.replace(spoilerRegex, (match, start, content, end) => {
+            return `<span class="spoiler" onclick="this.classList.toggle('revealed');">${content}</span>`;
+        });
 
         formattedText = formattedText.replace(/^\s*&gt;\s*(.+)$/gm, (match, content) => {
             return `<blockquote style="border-left: 4px solid #ccc; padding-left: 10px; color: #999;">${content.trim()}</blockquote>`;
         });
+
 
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
             return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
-        
+
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
