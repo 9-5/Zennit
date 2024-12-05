@@ -27,12 +27,12 @@ const App = () => {
     const [editMode, setEditMode] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
-    const [touchStartX, setTouchStartX] = useState(null);
-    const [touchEndX, setTouchEndX] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
     const [viewingAbout, setViewingAbout] = useState(false);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
+    const hammerRef = useRef(null);
 
+    
 
     // Main functions.
     const fetchPosts = (page) => {
@@ -909,6 +909,32 @@ const App = () => {
 
 
 
+    // Touch handlers
+    useEffect(() => {
+        hammerRef.current = new Hammer(document.getElementById('root'));
+        hammerRef.current.on('swipe', handleSwipe);
+
+        return () => {
+            hammerRef.current.off('swipe', handleSwipe);
+            hammerRef.current = null;
+        };
+    }, []);
+
+    const handleSwipe = (event) => {
+        if (event.direction === Hammer.DIRECTION_RIGHT) {
+            setSidebarOpen(true);
+        
+        }
+        if (event.direction === Hammer.DIRECTION_LEFT) {
+            setSidebarOpen(false);
+            setSelectedPost(null);
+            setViewingSaved(false);
+            setViewingAbout(false);
+        }
+    };
+
+
+
     // Miscellaneous functions
     const Toast = ({ message, onClose }) => {
         useEffect(() => {
@@ -923,31 +949,8 @@ const App = () => {
         );
     };
 
-    const handleTouchStart = (e) => {
-        const touch = e.touches[0];
-        setTouchStartX(touch.clientX);
-    };
-    
-    const handleTouchMove = (e) => {
-        const touch = e.touches[0];
-        setTouchEndX(touch.clientX);
-    };
-    
-    const handleTouchEnd = () => {
-        if (touchStartX === null || touchEndX === null) return;
-        const touchDiff = touchEndX - touchStartX;
-        if (touchDiff > 50) {
-            setSidebarOpen(true);
-        }
-        if (touchDiff < -50 && selectedPost) {
-            setSelectedPost(null);
-        }
-        setTouchStartX(null);
-        setTouchEndX(null);
-    };
-
     return (
-        <div className="flex h-screen" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <div className="flex h-screen">
             <div>
                 {renderSidebar()}
                 {showPopup && (renderSubredditDeletePopup())}

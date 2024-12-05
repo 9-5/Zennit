@@ -57,17 +57,6 @@ pre {
     background-color: #4b5563;
 }
 
-a {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-span {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-}
-
 img {
     max-width: 100%;
     height: auto;
