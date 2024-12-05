@@ -29,7 +29,9 @@ const App = () => {
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [touchStartX, setTouchStartX] = useState(null);
     const [touchEndX, setTouchEndX] = useState(null);
-
+    const [showSettings, setShowSettings] = useState(false);
+    const [viewingAbout, setViewingAbout] = useState(false);
+    const [showClearCachePopup, setShowClearCachePopup] = useState(false);
 
 
     // Main functions.
@@ -171,8 +173,8 @@ const App = () => {
     const renderPageHeader = () => {
         return (
             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); }}>
-                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false); setSidebarOpen(true) }}>
+                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); }}>
+                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false);; setViewingAbout(false); setSidebarOpen(true) }}>
                         <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Zennit Icon" className="w-8 h-8" />
                     </button>
                     <div className="ml-2">
@@ -193,8 +195,8 @@ const App = () => {
                     <button className="text-white ml-4" onClick={fetchPosts}>
                         <i className="fas fa-sync-alt"></i>
                     </button>
-                    <button className="text-white ml-4" onClick={() => setViewingSaved(!viewingSaved)}>
-                        {viewingSaved ? <i class="fas fa-bookmark inactive" id="bookmarkIcon"></i> : <i class="fas fa-bookmark active" id="bookmarkIcon"></i>}
+                    <button className="text-white ml-4" onClick={() => setShowSettings(!showSettings)}>
+                        <i className="fas fa-cog active" id="settingsIcon"></i>
                     </button>
                 </div>
             </div>
@@ -736,20 +738,29 @@ const App = () => {
     }, [enlargedCommentImage]);
 
 
-
-    // Function and support functions for saved posts
-    const renderViewSavedPost = () => {
+    // Settings page, components and functions
+    const SettingsPage = ({ onClose, onViewSavedPosts }) => {
         return (
-            <div>
-                <h2 className="text-white text-xl mb-4">Saved Posts</h2>
-                <div className="text-gray-400 text-sm mb-4">
-                <h3 className="text-gray-400 text-sm mt-1" onClick={() => setEditMode(!editMode)}>Edit saved posts</h3>
-                {renderSavedPosts()}
-                </div>
+            <div className="bg-gray-800 p-4 rounded">
+                <h2 className="text-white text-xl mb-4">Settings</h2>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handleViewSavedPosts}>
+                    View Saved Posts
+                </button>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={clearCache}>
+                    Clear Cache/Data
+                </button>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handleViewAbout}>
+                    About Zennit
+                </button>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
+                    Close
+                </button>
+                {showClearCachePopup && renderClearCachePopup()}
             </div>
-        )
-    }
+        );
+    };
 
+    //_ Function and support functions for saved posts
     const renderSavedPosts = () => {
         return savedPosts.map((post, index) => (
             <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
@@ -787,6 +798,18 @@ const App = () => {
         ));
     };
 
+    const renderViewSavedPost = () => {
+        return (
+            <div>
+                <h2 className="text-white text-xl mb-4">Saved Posts</h2>
+                <div className="text-gray-400 text-sm mb-4">
+                <h3 className="text-gray-400 text-sm mt-1" onClick={() => setEditMode(!editMode)}>Edit saved posts</h3>
+                {renderSavedPosts()}
+                </div>
+            </div>
+        )
+    }
+
     const renderDeleteSavedPostPopup = () => {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -818,6 +841,70 @@ const App = () => {
     const cancelDeletePost = () => {
         setShowDeletePopup(false);
         setPostToDelete(null);
+    };
+
+    const handleViewSavedPosts = () => {
+        setViewingSaved(true);
+        setShowSettings(false);
+    };
+
+    const renderClearCachePopup = () => {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-gray-800 p-4 rounded">
+                    <div className="text-white mb-4">Are you sure you want to clear the cache? This action cannot be undone.</div>
+                    <div className="flex justify-end">
+                        <button className="p-2 bg-gray-700 text-white rounded mr-2" onClick={confirmClearCache}>Yes</button>
+                        <button className="p-2 bg-gray-700 text-white rounded" onClick={cancelClearCache}>No</button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const clearCache = () => {
+        setShowClearCachePopup(true);
+    };
+
+    const confirmClearCache = () => {
+        localStorage.clear();
+        setSubreddits(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
+        setSelectedSubreddit(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
+        setSavedPosts(JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+        setToastMessage('Cache cleared successfully!');
+        setShowClearCachePopup(false);
+    };
+    
+    const cancelClearCache = () => {
+        setShowClearCachePopup(false);
+    };
+
+    const renderAbout = () => {
+        return (
+            <div className="bg-gray-800 p-4 rounded">
+                <h2 className="text-white text-xl mb-4">About Zennit</h2>
+                <p className="text-gray-400 mb-2">
+                    Zennit started as a creative project to fill some time. Being a frequent lurker on Reddit, ads, highly cluttered interfaces, and much more always bothered me. I opted to build an entirely minimal "zen" frontend instead.
+                </p>
+                <p className="text-gray-400 mb-2">
+                    My goal with Zennit is to create a clean and user-friendly interface for browsing Reddit, focusing on simplicity and ease of use. I hope to continue improving it and adding features that enhance the user experience.
+                </p>
+                <div className="flex items-center mt-4">
+                    <a href="https://github.com/9-5/Zennit" target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-500 hover:underline mr-4">
+                        <i className="fab fa-github mr-2"></i>
+                        GitHub Repo
+                    </a>
+                    <a href="https://johnle.org" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        Developer's Page
+                    </a>
+                </div>
+            </div>
+        );
+    };
+
+    const handleViewAbout = () => {
+        setViewingAbout(true);
+        setShowSettings(false);
     };
 
 
@@ -868,9 +955,10 @@ const App = () => {
             <div className="flex-1 bg-gray-800 p-4 flex flex-col">
                 {contentBlockerDetected && (renderContentBlocked())}
                 {renderPageHeader()}
+                {showSettings && <SettingsPage onClose={() => setShowSettings(false)} onViewSavedPosts={handleViewSavedPosts} />}
                 <div className="flex-1 overflow-y-auto">
                     {loadingPosts && (renderLoadingSpinner())}
-                    {viewingSaved ? (renderViewSavedPost()) : selectedPost ? (renderSelectedPost()) : (renderPostFeed())}
+                    {viewingSaved ? (renderViewSavedPost()) : selectedPost ? (renderSelectedPost()) : viewingAbout ? (renderAbout()) : (renderPostFeed())}
                 </div>
                 {enlargedImage && (renderEnlargedPostImages())}
                 {enlargedCommentImage && (renderEnlargedCommentImages())}
