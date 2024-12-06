@@ -28,9 +28,11 @@ const App = () => {
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
+    const [commitInfo, setCommitInfo] = useState(null);
     const [viewingAbout, setViewingAbout] = useState(false);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
     const hammerRef = useRef(null);
+
 
     
 
@@ -146,7 +148,6 @@ const App = () => {
         });
         return `${formattedDate} ${formattedTime}`;
     };
-
     const formatUpvotes = (upvotes) => {
         if (upvotes >= 100000) {
             return `${Math.floor(upvotes / 1000)}K`;
@@ -484,26 +485,26 @@ const App = () => {
             );
         } else if (post.url && !post.url.includes("/comments/")) {
             const isRedditUrl = post.url.includes("reddit.com") || post.url.includes("redd.it");
-            return isRedditUrl ? (
-                <img 
-                    src={post.url} 
-                    alt="Post content" 
-                    className="mt-2 rounded max-w-full cursor-pointer" 
-                    height="30%" 
-                    width="30%" 
-                    onClick={() => handleImageClick(post.url)}
-                />
-            ) : (
-                <a href={post.url} className="text-blue-500 underline mt-2 block">{post.url}</a>
-            );
+            if (isRedditUrl) {
+                return (
+                    <img 
+                        src={post.url} 
+                        alt="Post content" 
+                        className="mt-2 rounded max-w-full cursor-pointer" 
+                        height="30%" 
+                        width="30%" 
+                        onClick={() => handleImageClick(post.url)}
+                    />
+                );
+            } else {
+                return <EmbedCard url={post.url} fallbackTitle={post.title} />;
+            }
         }
         return null;
     };
 
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
-
-    
         const items = post.gallery_data.items.map(item => {
             const media = post.media_metadata[item.media_id];
             const src = media.s.u.replace(/&amp;/g, '&');
@@ -541,6 +542,58 @@ const App = () => {
         setEnlargedImage(null);
     };
 
+    const EmbedCard = ({ url, fallbackTitle }) => {
+        const [postTitle, setPostTitle] = useState(fallbackTitle);
+        const [baseUrl, setBaseUrl] = useState('');
+
+        useEffect(() => {
+            const extractBaseUrl = (url) => {
+                try {
+                    const parsedUrl = new URL(url);
+                    return parsedUrl.hostname;
+                } catch (error) {
+                    console.error('Invalid URL:', error);
+                    return '';
+                }
+            };
+
+            setBaseUrl(extractBaseUrl(url));
+
+            const fetchPageTitle = async () => {
+                try {
+                    const response = await fetch(url, { method: 'GET' });
+                    const doc = await response.text();
+                    const titleMatch = doc.match(/<title>(.*?)<\/title>/);
+                    if (titleMatch) {
+                        setPostTitle(titleMatch[1]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching page title:', error);
+                }
+            };
+
+            fetchPageTitle();
+        }, [url]);
+
+        return (
+            <div className="max-w-xl mx-auto p-4">
+                <div className="bg-gray-800 p-4 rounded-lg">
+                    <h1 className="text-2xl font-bold">{postTitle || 'Loading...'}</h1>
+                    <div className="flex justify-between items-center mt-4 border-t border-gray-700 pt-2">
+                        <span className="text-blue-400">{baseUrl}</span>
+                        <button 
+                            className="border border-gray-500 text-gray-300 px-4 py-1 rounded-full hover:bg-gray-700" 
+                            onClick={() => window.open(url, '_blank')}
+                        >
+                            Open
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    
     const renderFormattedText = (text) => {
         if (!text || typeof text !== 'string') {
             return null;
@@ -567,7 +620,6 @@ const App = () => {
             return `<blockquote style="border-left: 4px solid #ccc; padding-left: 10px; color: #999;">${content.trim()}</blockquote>`;
         });
 
-
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
@@ -578,6 +630,8 @@ const App = () => {
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
+
+        
 
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
@@ -678,15 +732,15 @@ const App = () => {
     
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                <div className="flex items-center text-gray-400 text-sm">
-                    <button className="ml-2 text-blue-500" onClick={toggleVisibility}>
+                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
+                    <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
-                    <span>by {comment.author}</span>
+                    <span className="ml-1">by {comment.author}</span>
+                    <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
                 </div>
                 {isVisible && (
                     <div>
-                        <span className="text-gray-400"><i className="fas fa-arrow-up"></i> {formatUpvotes(comment.ups)} upvotes</span>
                         <div>{renderFormattedText(comment.body)}</div>
 
                         {comment.replies && comment.replies.length > 0 && (
@@ -889,6 +943,14 @@ const App = () => {
                 <p className="text-gray-400 mb-2">
                     My goal with Zennit is to create a clean and user-friendly interface for browsing Reddit, focusing on simplicity and ease of use. I hope to continue improving it and adding features that enhance the user experience.
                 </p>
+                {commitInfo && (
+                    <div className="text-gray-400 mt-4">
+                        <p>
+                            Built from <a href={`https://github.com/9-5/Zennit/tree/${commitInfo.hash}`} className="text-blue-500">{commitInfo.hash}</a>
+                        </p>
+                        <p>Changes: {commitInfo.message}</p>
+                    </div>
+                )}
                 <div className="flex items-center mt-4">
                     <a href="https://github.com/9-5/Zennit" target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-500 hover:underline mr-4">
                         <i className="fab fa-github mr-2"></i>
@@ -901,6 +963,26 @@ const App = () => {
             </div>
         );
     };
+
+    const fetchCommitInfo = async () => {
+        try {
+            const response = await fetch('https://api.github.com/repos/9-5/Zennit/commits/main'); // Adjust the branch if necessary
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            setCommitInfo({
+                hash: data.sha,
+                message: data.commit.message,
+            });
+        } catch (error) {
+            console.error('Error fetching commit info:', error);
+        }
+    };
+    
+    useEffect(() => {
+        fetchCommitInfo();
+    }, []);
 
     const handleViewAbout = () => {
         setViewingAbout(true);
