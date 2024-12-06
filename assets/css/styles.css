@@ -113,4 +113,51 @@ blockquote {
         background: rgba(33, 31, 55, 0.5); 
     }
 }
+/* Zen Light Mode Styles */
+.light-mode .bg-gray-700 {
+    background-color: #b3e5fc; /* Soft light blue background */
+}
 
+.light-mode .bg-gray-600 {
+    background-color: #81d4fa; /* Muted light blue background */
+}
+
+.light-mode .bg-gray-800 {
+    background-color: #4fc3f7; /* Calming blue background */
+}
+
+.light-mode .bg-red-600 {
+    background-color: #ffcccb; /* Light coral background */
+}
+
+.light-mode .bg-gray-900 {
+    background-color: #e1f5fe; /* Very soft blue background */
+}
+
+.light-mode .text-white {
+    color: #0d47a1; /* Deep blue text for contrast */
+}
+
+.light-mode .text-gray-400 {
+    color: #0d47a1; /* Deep blue text for light mode */
+}
+
+.light-mode .text-blue-500 {
+    color: #0d47a1; /* Deep blue for links */
+}
+
+.light-mode .border-gray-700 {
+    border-color: #4fc3f7; /* Calming blue border */
+}
+
+.light-mode .border-gray-500 {
+    border-color: #81d4fa; /* Muted light blue border */
+}
+
+.light-mode .bg-black {
+    background-color: #e3f2fd; /* Soft light blue background for overlays */
+}
+
+.light-mode .bg-opacity-50 {
+    background-color: rgba(224, 242, 254, 0.5); /* Soft light blue background with opacity */
+}

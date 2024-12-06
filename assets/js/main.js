@@ -32,6 +32,7 @@ const App = () => {
     const [viewingAbout, setViewingAbout] = useState(false);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
     const hammerRef = useRef(null);
+    const [isLightMode, setIsLightMode] = useState(document.body.classList.contains('light-mode'));
 
 
     
@@ -194,7 +195,7 @@ const App = () => {
                         <option value="rising">Rising</option>
                     </select>
                     <button className="text-white ml-4" onClick={fetchPosts}>
-                        <i className="fas fa-sync-alt"></i>
+                        <i className="fas fa-sync-alt active"></i>
                     </button>
                     <button className="text-white ml-4" onClick={() => setShowSettings(!showSettings)}>
                         <i className="fas fa-cog active" id="settingsIcon"></i>
@@ -429,7 +430,7 @@ const App = () => {
                         <i className="fas fa-share-alt"></i>  Share Post
                     </button>
                     <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}>
-                        <i class="fas fa-bookmark active" id="bookmarkIcon"></i>  Save Post
+                        <i class="fas fa-bookmark" id="bookmarkIcon"></i>  Save Post
                     </button>
                 </div>
                 <div className="flex items-center justify-between mt-4">
@@ -732,7 +733,7 @@ const App = () => {
     
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
+                <div className="flex items-center text-gray-400 text-sm cursor-pointer" >
                     <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
@@ -794,11 +795,17 @@ const App = () => {
 
     // Settings page, components and functions
     const SettingsPage = ({ onClose, onViewSavedPosts }) => {
+       
+        
+
         return (
             <div className="bg-gray-800 p-4 rounded">
                 <h2 className="text-white text-xl mb-4">Settings</h2>
-                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handleViewSavedPosts}>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { onViewSavedPosts(); onClose(); }}>
                     View Saved Posts
+                </button>
+                <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { toggleLightMode(); onClose(); }}>
+                    {isLightMode ? 'Toggle Dark Mode' : 'Toggle Light Mode'}
                 </button>
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={clearCache}>
                     Clear Cache/Data
@@ -813,6 +820,12 @@ const App = () => {
             </div>
         );
     };
+
+    const toggleLightMode = () => {
+            document.body.classList.toggle('light-mode');
+            const isLightMode = document.body.classList.contains('light-mode');
+            localStorage.setItem('lightMode', isLightMode);
+        };
 
     //_ Function and support functions for saved posts
     const renderSavedPosts = () => {
@@ -1005,7 +1018,6 @@ const App = () => {
     const handleSwipe = (event) => {
         if (event.direction === Hammer.DIRECTION_RIGHT) {
             setSidebarOpen(true);
-        
         }
         if (event.direction === Hammer.DIRECTION_LEFT) {
             setSidebarOpen(false);
@@ -1030,6 +1042,32 @@ const App = () => {
             </div>
         );
     };
+
+    const checkSystemPreference = () => {
+        const savedPreference = localStorage.getItem('lightMode');
+        if (savedPreference !== null) {
+            if (savedPreference === 'true') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        } else {
+            const prefersLightMode = window.matchMedia('(prefers-color-scheme: light)').matches;
+            if (prefersLightMode) {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        }
+    };
+    
+    useEffect(() => {
+        checkSystemPreference();
+    }, []);
+
+    useEffect(() => {
+        checkSystemPreference();
+    }, []);
 
     return (
         <div className="flex h-screen">
