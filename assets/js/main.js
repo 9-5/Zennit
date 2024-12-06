@@ -31,9 +31,10 @@ const App = () => {
     const [commitInfo, setCommitInfo] = useState(null);
     const [viewingAbout, setViewingAbout] = useState(false);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
+    const themes = [{ name: 'Ocean', className: '' }, { name: 'Sky', className: 'sky' }, { name: 'Forest', className: 'forest' }, { name: 'Bamboo', className: 'bamboo' }, { name: 'Crimson', className: 'crimson' }, { name: 'Blush', className: 'blush' }, { name: 'Petal', className: 'petal' }, { name: 'Lotus', className: 'lotus' }, { name: 'Amethyst', className: 'amethyst' }];
+    const [currentTheme, setCurrentTheme] = useState(() => {return localStorage.getItem('theme') || 'Ocean';});
     const hammerRef = useRef(null);
-    const [isLightMode, setIsLightMode] = useState(document.body.classList.contains('light-mode'));
-
+    
 
     
 
@@ -795,8 +796,6 @@ const App = () => {
 
     // Settings page, components and functions
     const SettingsPage = ({ onClose, onViewSavedPosts }) => {
-       
-        
 
         return (
             <div className="bg-gray-800 p-4 rounded">
@@ -804,16 +803,25 @@ const App = () => {
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { onViewSavedPosts(); onClose(); }}>
                     View Saved Posts
                 </button>
-                <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { toggleLightMode(); onClose(); }}>
-                    {isLightMode ? 'Toggle Dark Mode' : 'Toggle Light Mode'}
-                </button>
+                <select 
+                    className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
+                    style = {{ 'text-align': 'center' }}
+                    value={currentTheme} 
+                    onChange={(e) => changeTheme(e.target.value)}
+                >
+                    {themes.map((theme, index) => (
+                        <option key={index} value={theme.name}>
+                            {theme.name}
+                        </option>
+                    ))}
+                </select>
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={clearCache}>
                     Clear Cache/Data
                 </button>
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handleViewAbout}>
                     About Zennit
                 </button>
-                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
+                <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
                     Close
                 </button>
                 {showClearCachePopup && renderClearCachePopup()}
@@ -821,11 +829,14 @@ const App = () => {
         );
     };
 
-    const toggleLightMode = () => {
-            document.body.classList.toggle('light-mode');
-            const isLightMode = document.body.classList.contains('light-mode');
-            localStorage.setItem('lightMode', isLightMode);
-        };
+    useEffect(() => {
+        document.body.className = currentTheme === 'Ocean' ? '' : currentTheme.toLowerCase();
+        localStorage.setItem('theme', currentTheme);
+    }, [currentTheme]);
+
+    const changeTheme = (theme) => {
+        setCurrentTheme(theme);
+    };
 
     //_ Function and support functions for saved posts
     const renderSavedPosts = () => {
@@ -1042,32 +1053,6 @@ const App = () => {
             </div>
         );
     };
-
-    const checkSystemPreference = () => {
-        const savedPreference = localStorage.getItem('lightMode');
-        if (savedPreference !== null) {
-            if (savedPreference === 'true') {
-                document.body.classList.add('light-mode');
-            } else {
-                document.body.classList.remove('light-mode');
-            }
-        } else {
-            const prefersLightMode = window.matchMedia('(prefers-color-scheme: light)').matches;
-            if (prefersLightMode) {
-                document.body.classList.add('light-mode');
-            } else {
-                document.body.classList.remove('light-mode');
-            }
-        }
-    };
-    
-    useEffect(() => {
-        checkSystemPreference();
-    }, []);
-
-    useEffect(() => {
-        checkSystemPreference();
-    }, []);
 
     return (
         <div className="flex h-screen">
