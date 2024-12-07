@@ -634,10 +634,9 @@ const App = () => {
             return `<a href="${url}" class="url" target="_blank" rel="noopener noreferrer">${url}</a>`;
         });
     
-        // Handle markdown links
-        const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-        formattedText = formattedText.replace(markdownLinkRegex, (match, displayText, url) => {
-            return `<a href="${url}" class="url" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
+        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
+            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
 
         const inlineRegex = [
