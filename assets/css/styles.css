@@ -10,10 +10,11 @@ body {
     white-space: normal; /* Allows text to wrap */
 }
 .comment-body {
-    max-width: 100%; /* Prevents stretching beyond the container */
-    overflow-wrap: break-word; /* Allows long words to break */
-    white-space: normal; /* Allows text to wrap */
-    word-break: break-all;
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
 }
 ::-webkit-scrollbar {
     display: none;
