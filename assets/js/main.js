@@ -633,15 +633,6 @@ const App = () => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
         
-        const urlRegex = /(?<!<a\s+href=")(https?:\/\/[^\s]+)(?<!\bwww\.)/g;
-
-        function convertPlaintextUrls(text) {
-          return text.replace(urlRegex, (match, p1) => {
-            return `<a href="${p1}" target="_blank">${p1}</a>`;
-          });
-        }
-        const formattedText = convertPlaintextUrls(formattedText);
-    
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
             { regex: /\^(\S+)/g, tag: 'sup' },
