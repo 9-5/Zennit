@@ -10,7 +10,7 @@ body {
     white-space: normal; /* Allows text to wrap */
 }
 .comment-body {
-    max-width: 70%; /* Prevents stretching beyond the container */
+    max-width: 100%; /* Prevents stretching beyond the container */
     overflow-wrap: break-word; /* Allows long words to break */
     white-space: normal; /* Allows text to wrap */
     word-break: break-all;
