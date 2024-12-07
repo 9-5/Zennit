@@ -17,7 +17,7 @@ body {
     white-space: pre-wrap;
 }
 .hash {
-    font-size: 3px;
+    font-size: 6px;
 }
 ::-webkit-scrollbar {
     display: none;
