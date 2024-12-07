@@ -633,6 +633,12 @@ const App = () => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
         });
         
+        const plainLinkRegex = /https?:\/\/[^\s]+/g;
+        formattedText = formattedText.replace(plainLinkRegex, (url) => {
+            const linkText = url.split('/')[0];
+            return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
+        }
+        
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
             { regex: /\^(\S+)/g, tag: 'sup' },
