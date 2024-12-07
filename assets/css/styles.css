@@ -17,7 +17,8 @@ body {
     white-space: pre-wrap;
 }
 .hash {
-    font-size: 6px;
+    font-size: 10px;
+    font-family: 'Courier New', Courier, monospace;
 }
 ::-webkit-scrollbar {
     display: none;
