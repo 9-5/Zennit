@@ -637,7 +637,7 @@ const App = () => {
         formattedText = formattedText.replace(plainLinkRegex, (url) => {
             const linkText = url.split('/')[0];
             return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
-        }
+        });
         
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
