@@ -16,6 +16,9 @@ body {
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
+code {
+    font-size: 8px;
+}
 ::-webkit-scrollbar {
     display: none;
 }
