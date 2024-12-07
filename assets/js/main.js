@@ -627,17 +627,19 @@ const App = () => {
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
             return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
-    
-        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
-            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
-        });
         
         const plainLinkRegex = /https?:\/\/[^\s]+/g;
         formattedText = formattedText.replace(plainLinkRegex, (url) => {
             const linkText = url.split('/')[0];
             return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
         });
+    
+        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
+            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
+        });
+        
+        
         
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
