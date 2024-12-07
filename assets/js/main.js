@@ -976,7 +976,7 @@ const App = () => {
                 {commitInfo && (
                     <div className="text-gray-400 mt-4">
                         <p>
-                            Built from <a href={`https://github.com/9-5/Zennit/tree/${commitInfo.hash}`} className="text-blue-500 hash">{commitInfo.hash}</a>
+                            Built from <a href={`https://github.com/9-5/Zennit/tree/${commitInfo.hash}`} className="text-blue-500">{commitInfo.hash}</a>
                         </p>
                         <p>Changes: {commitInfo.message}</p>
                     </div>
