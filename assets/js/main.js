@@ -740,7 +740,7 @@ const App = () => {
     
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick=toggleVisibility>
+                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
                     <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
