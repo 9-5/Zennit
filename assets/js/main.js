@@ -628,11 +628,11 @@ const App = () => {
             return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
         
-        const plainLinkRegex = /https?:\/\/[^\s]+/g;
-        formattedText = formattedText.replace(plainLinkRegex, (url) => {
-            const linkText = url.split('/')[0];
-            return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
-        });
+        //const plainLinkRegex = /https?:\/\/[^\s]+/g;
+        //formattedText = formattedText.replace(plainLinkRegex, (url) => {
+            //const linkText = url.split('/')[0];
+            //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
+        //});
     
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
