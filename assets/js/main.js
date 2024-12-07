@@ -627,12 +627,6 @@ const App = () => {
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
             return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
-        
-
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        formattedText = formattedText.replace(urlRegex, (url) => {
-            return `<a href="${url}" class="url" target="_blank" rel="noopener noreferrer">${url}</a>`;
-        });
     
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
