@@ -13,6 +13,7 @@ body {
     max-width: 70%; /* Prevents stretching beyond the container */
     overflow-wrap: break-word; /* Allows long words to break */
     white-space: normal; /* Allows text to wrap */
+    word-break: break-all;
 }
 ::-webkit-scrollbar {
     display: none;
