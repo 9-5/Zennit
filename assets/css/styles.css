@@ -16,7 +16,7 @@ body {
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
-code {
+.hash {
     font-size: 3px;
 }
 ::-webkit-scrollbar {
