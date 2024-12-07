@@ -4,6 +4,16 @@ body {
     color: #ffffff;
     white-space: normal;
 }
+.title-container {
+    max-width: 70%; /* Adjust as needed */
+    overflow-wrap: break-word; /* Allows long words to break */
+    white-space: normal; /* Allows text to wrap */
+}
+.comment-body {
+    max-width: 100%; /* Prevents stretching beyond the container */
+    overflow-wrap: break-word; /* Allows long words to break */
+    white-space: normal; /* Allows text to wrap */
+}
 ::-webkit-scrollbar {
     display: none;
 }

@@ -408,7 +408,7 @@ const App = () => {
             <div>
                 <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
                     <div className="flex justify-between items-start">
-                        <div className="flex-1">
+                        <div className="flex-1 title-container overflow-hidden">
                             <span className="whitespace-normal">{selectedPost.title.replace(/&amp;/g, '&')}</span>
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
@@ -742,7 +742,7 @@ const App = () => {
                     <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
                 </div>
                 {isVisible && (
-                    <div>
+                    <div className="comment-body">
                         <div>{renderFormattedText(comment.body)}</div>
 
                         {comment.replies && comment.replies.length > 0 && (
