@@ -634,10 +634,10 @@ const App = () => {
             //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
         //});
     
-        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s<>()]+)(?<![\]\)])/g;
+        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\)\]]+)(?<![\]\)])/g;
         formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
             console.log(match);
-            return `<a href="${match}" class="text-blue-500 underline">${match}</a>`;
+            return `<a href="${encodeURIComponent(match)}" class="text-blue-500 underline">${match}</a>`;
         });
         
         // Then handle markdown-style links
