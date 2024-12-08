@@ -634,19 +634,7 @@ const App = () => {
             //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
         //});
     
-        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\(\)]+)(?<![\]\)])/g;
-        formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
-            // Remove any existing HTML tags from the match
-            const cleanMatch = match.replace(/<\/?[^>]*>/g, '');
-            
-            return `<a href="${cleanMatch}" class="text-blue-500 underline">${cleanMatch}</a>`;
-        });
         
-        // Then handle markdown-style links
-        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
-        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
-            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
-        });
         
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
@@ -679,7 +667,21 @@ const App = () => {
                 return `<${tag} class="${className || ''}">${p2}</${tag}>`;
             });
         });
-    
+        
+        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\(\)]+)(?<![\]\)])/g;
+        formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
+            // Remove any existing HTML tags from the match
+            const cleanMatch = match.replace(/<\/?[^>]*>/g, '');
+            
+            return `<a href="${cleanMatch}" class="text-blue-500 underline">${cleanMatch}</a>`;
+        });
+        
+        // Then handle markdown-style links
+        const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+        formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
+            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
+        });
+        
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
         formattedText = formattedText.replace(codeBlockRegex, (match, p1) => {
             const codeContent = p1.replace(/^ {4}/gm, '');
