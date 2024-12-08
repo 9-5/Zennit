@@ -634,15 +634,15 @@ const App = () => {
             //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
         //});
     
+        const plaintextUrlRegex = /(?<!\[.*?\]\()(https?:\/\/[^\s\)]+)/g;
+        formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
+            return `<a href="${match}" class="text-blue-500 underline">${match}</a>`;
+        });
+        
+        // Then handle markdown-style links
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
-        });
-        
-        const plaintextUrlRegex = /(?<!\[.*?\]\()(https?:\/\/[^\s\)]+)/g;
-        formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
-            console.log(match)
-            return `<a href="${match}" class="text-blue-500 underline">${match}</a>`;
         });
         
         const inlineRegex = [
