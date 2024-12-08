@@ -634,7 +634,7 @@ const App = () => {
             //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
         //});
     
-        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\)\]]+)(?<![\]\)])/g;
+        const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\(\)]+)(?<![\]\)])/g;
         formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
             // Remove any existing HTML tags from the match
             const cleanMatch = match.replace(/<\/?[^>]*>/g, '');
