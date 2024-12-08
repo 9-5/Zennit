@@ -642,7 +642,8 @@ const App = () => {
         const plaintextUrlRegex = /(?<!\[.*?\]\()(https?:\/\/[^\s\)]+)/g;
         const match1 = formatted.match(plaintextUrlRegex);
         formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
-            return <a href="${match1}" class="text-blue-500 underline">${match1}</a>
+            return `<a href="${match1}" class="text-blue-500 underline">${match1}</a>`;
+        });
         
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
