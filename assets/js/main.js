@@ -628,14 +628,6 @@ const App = () => {
             return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
         
-        //const plainLinkRegex = /https?:\/\/[^\s]+/g;
-        //formattedText = formattedText.replace(plainLinkRegex, (url) => {
-            //const linkText = url.split('/')[0];
-            //return `<a href="${url}" class="text-blue-500 underline">${url}</a>`;
-        //});
-    
-        
-        
         const inlineRegex = [
             { regex: /~~(.*?)~~/g, tag: 'del' },
             { regex: /\^(\S+)/g, tag: 'sup' },
@@ -675,8 +667,7 @@ const App = () => {
             
             return `<a href="${cleanMatch}" class="text-blue-500 underline">${cleanMatch}</a>`;
         });
-        
-        // Then handle markdown-style links
+
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
             return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
