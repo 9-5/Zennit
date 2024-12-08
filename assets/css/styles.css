@@ -20,6 +20,14 @@ body {
     font-size: 13px;
     font-family: 'Courier New', Courier, monospace;
 }
+.ww-anchor {
+    display: inline-block;
+    max-width: 200px; 
+    word-wrap: break-word;
+    overflow-wrap: break-word; 
+    white-space: normal; 
+    text-overflow: ellipsis; /* Optional: adds ellipsis for overflowed text */
+}
 ::-webkit-scrollbar {
     display: none;
 }
