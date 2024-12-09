@@ -19,10 +19,12 @@ body {
 .hash {
     font-size: 13px;
     font-family: 'Courier New', Courier, monospace;
+    word-wrap: break-word;
+    overflow-wrap: break-word; 
 }
 .ww-anchor {
     display: inline-block;
-    max-width: 250px; 
+    max-width: 300px; 
     word-wrap: break-word;
     overflow-wrap: break-word; 
     white-space: normal;

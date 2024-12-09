@@ -114,7 +114,6 @@ const App = () => {
                             ups: reply.data.ups - reply.data.downs,
                         })) : []
                     };
-    
                     if (commentData.media_metadata && commentData.media_metadata.length > 0) {
                         commentData.media_metadata.forEach(media => {
                             media.s.u = media.s.u.replace(/redd\.it\/(.*?)(\.jpeg|\.jpg|\.png)/, `redd.it/${postTitle}$1$2`);
@@ -735,7 +734,13 @@ const App = () => {
         const toggleVisibility = () => {
             setIsVisible(!isVisible);
         };
-    
+
+        const isUpsValid = !isNaN(comment.ups);
+
+        if (!isUpsValid) {
+            return null;
+        }
+
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
                 <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
@@ -804,9 +809,6 @@ const App = () => {
         return (
             <div className="bg-gray-800 p-4 rounded">
                 <h2 className="text-white text-xl mb-4">Settings</h2>
-                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { onViewSavedPosts(); onClose(); }}>
-                    View Saved Posts
-                </button>
                 <select 
                     className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
                     style = {{ 'text-align': 'center' }}
@@ -819,10 +821,13 @@ const App = () => {
                         </option>
                     ))}
                 </select>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { onViewSavedPosts(); onClose(); }}>
+                    View Saved Posts
+                </button>
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={clearCache}>
                     Clear Cache/Data
                 </button>
-                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handleViewAbout}>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { setSelectedPost(null); setViewingSaved(false); handleViewAbout(); onClose(); }}>
                     About Zennit
                 </button>
                 <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
@@ -837,6 +842,22 @@ const App = () => {
         document.body.className = currentTheme === 'Ocean' ? '' : currentTheme.toLowerCase();
         localStorage.setItem('theme', currentTheme);
     }, [currentTheme]);
+
+    const CustomSettings = ({ onClose }) => {
+        return (
+            <select 
+                className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
+                style = {{ 'text-align': 'center' }}
+                value={currentTheme} 
+                onChange={(e) => changeTheme(e.target.value)}
+            >
+                {themes.map((theme, index) => (
+                    <option key={index} value={theme.name}>
+                        {theme.name}
+                    </option>
+                ))}
+            </select>
+        )};
 
     const changeTheme = (theme) => {
         setCurrentTheme(theme);
