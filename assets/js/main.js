@@ -624,7 +624,7 @@ const App = () => {
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
-            return `<h${level} style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
+            return `<h${level} className="ww-anchor" style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
         
         const inlineRegex = [
