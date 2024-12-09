@@ -24,10 +24,8 @@ body {
 }
 .ww-anchor {
     display: inline-block;
-    max-width: 300px; 
-    word-wrap: break-word;
-    overflow-wrap: break-word; 
-    white-space: normal;
+    max-width: min-content; 
+    overflow-wrap: anywhere;
 }
 ::-webkit-scrollbar {
     display: none;
