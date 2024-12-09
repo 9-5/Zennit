@@ -326,7 +326,6 @@ const App = () => {
     const viewPost = (postId) => {
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         setSelectedPost(post);
-        setToastMessage(`${selectedPost}`)
         fetchComments(postId);
         setViewingSaved(false);
     };
