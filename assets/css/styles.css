@@ -9,6 +9,13 @@ body {
     overflow-wrap: break-word; /* Allows long words to break */
     white-space: normal; /* Allows text to wrap */
 }
+.post-body {
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
 .comment-body {
     max-width: 100%;
     word-wrap: break-word;
