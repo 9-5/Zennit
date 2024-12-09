@@ -89,6 +89,13 @@ pre {
 .bg-gray-600 {
     background-color: #4b5563;
 }
+h1, h2, h3, h4, h5, h6 {
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
 
 img {
     max-width: 100%;
