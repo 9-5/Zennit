@@ -422,7 +422,7 @@ const App = () => {
                         <span>{formatDate(selectedPost.created_utc)}</span>
                     </div>
                 </div>
-                <div className="text-white post-body bg-gray-700 p-2 rounded mt-1">
+                <div className="text-white bg-gray-700 p-2 rounded mt-1">
                         {renderFormattedText(selectedPost.content)}
                         {renderPostContent(selectedPost)}
                 
@@ -678,7 +678,7 @@ const App = () => {
     
         formattedText = formattedText.replace(/\n/g, '<br/>');
         return (
-            <div>
+            <div className="post-body">
                 <span dangerouslySetInnerHTML={{ __html: formattedText }} />
                 {imageUrls.map((url, index) => (
                     <img
