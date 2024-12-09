@@ -20,37 +20,35 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Usage](#usage)
 
-[Deployment](#deployment)
+[Contributing](#contributing)
+
+[License](#license)
 
 ## Screenshots
-
-*Home Page*
-<p align="center"><img src="assets\screenshots\home.png" height="500" width="500"/></p>
-
-*Post View*
-<p align="center"><img src="assets\screenshots\post.png" height="500" width="500"/></p>
-
-*Mobile View*
-<p align="center"><img src="assets\screenshots\mobile.png" height="500" width="250"/></p>
+Include screenshots of the application here.
 
 ## Features
-
-- **Browse Reddit Posts and Comments**: Enjoy a clutter-free interface for accessing Reddit content.
-- **Subreddit Management**: Easily add and remove subreddits from your feed.
-- **Mobile-First Design**: Zennit is designed to work seamlessly on mobile devices.
-- **Customizable Themes**: Choose from a variety of themes to personalize your experience. _(Coming Soon)_
-- **Offline Support**: Access previously loaded content even when offline. _(Coming Soon)_
-- **Search Functionality:** Search for posts by title or content.
+- Browse Reddit posts and comments.
+- Add and remove subreddits.
+- Clean and user-friendly interface.
+- Mobile-first design.
+- Option to save downloaded posts to browser.
+- Search for subreddits
 
 ## Technologies Used
-
 - React
 - Tailwind CSS
 - Reddit API
 
 ## Installation
+To install Zennit, simply clone the repository and open the `index.html` file in your web browser.
 
-To install Zennit, simply download the `index.html` file and open it in your web browser. There is no need for a web server as all of the code is ran directly from the HTML file.
+```bash
+git clone https://github.com/0kb-club/zennit.git
+cd zennit
+```
+
+Alternatively, you can directly open the `index.html` file from your file system without needing a local server. All dependencies are loaded directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
@@ -64,3 +62,9 @@ To install Zennit, simply download the `index.html` file and open it in your web
 7. Enjoy a clean and user-friendly interface for browsing Reddit posts and comments.
 
 __Subreddits can be removed in the sidebar by right-clicking on the subreddit name or long-pressing on the subreddit name.__
+
+## Contributing
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+This project is licensed under the [MIT License](LICENSE).
