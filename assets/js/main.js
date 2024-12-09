@@ -667,7 +667,7 @@ const App = () => {
 
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
-            return `<a href="${p2}" class="text-blue-500 underline">${p1}</a>`;
+            return `<a href="${p2}" class="text-blue-500 underline ww-anchor">${p1}</a>`;
         });
         
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
