@@ -12,6 +12,7 @@ const App = () => {
     const [comments, setComments] = useState([]);
     const [sort, setSort] = useState('hot');
     const [commentSort, setCommentSort] = useState('best');
+    const [activeUserTab, setActiveUserTab] = useState('posts');
     const [newSubreddit, setNewSubreddit] = useState('');
     const [toastMessage, setToastMessage] = useState('');
     const [showPopup, setShowPopup] = useState(false);
@@ -28,13 +29,19 @@ const App = () => {
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
-    const [commitInfo, setCommitInfo] = useState(null);
-    const [viewingAbout, setViewingAbout] = useState(false);
-    const [showClearCachePopup, setShowClearCachePopup] = useState(false);
+    const settingsRef = useRef(null);
+    const [showConfig, setShowConfig] = useState(false);
     const themes = [{ name: 'Ocean', className: '' }, { name: 'Sky', className: 'sky' }, { name: 'Forest', className: 'forest' }, { name: 'Bamboo', className: 'bamboo' }, { name: 'Crimson', className: 'crimson' }, { name: 'Blush', className: 'blush' }, { name: 'Petal', className: 'petal' }, { name: 'Lotus', className: 'lotus' }, { name: 'Amethyst', className: 'amethyst' }];
     const [currentTheme, setCurrentTheme] = useState(() => {return localStorage.getItem('theme') || 'Ocean';});
+    const [showNSFWPosts, setShowNSFWPosts] = useState(() => JSON.parse(localStorage.getItem('showNSFWPosts')) || false);
+    const [disableComments, setDisableComments] = useState(() => JSON.parse(localStorage.getItem('disableComments')) || false);
+    const [disableCommentReplies, setDisableCommentReplies] = useState(() => JSON.parse(localStorage.getItem('disableCommentReplies')) || false);
+    const [viewingAbout, setViewingAbout] = useState(false);
+    const [commitInfo, setCommitInfo] = useState(null);
+    const [showClearCachePopup, setShowClearCachePopup] = useState(false);
+    const [showErrorPopup, setShowErrorPopup] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
-    
 
     
 
@@ -53,6 +60,7 @@ const App = () => {
             .then(response => {
                 if (!response.ok) {
                     setContentBlockerDetected(true);
+                    setErrorMessage(`Error: ${response.status} ${response.statusText}`);
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
@@ -70,7 +78,8 @@ const App = () => {
                     media_metadata: child.data.media_metadata,
                     pinned: child.data.stickied,
                     ups: child.data.ups - child.data.downs,
-                    media: child.data.media
+                    media: child.data.media,
+                    nsfw: child.data.over_18
                 }));
                 
                 setPosts(prevPosts => [...fetchedPosts]);
@@ -78,7 +87,7 @@ const App = () => {
 
             })
             .catch(error => {
-                console.error('Fetch error:', error);
+                console.error('Post fetch error:', error);
                 setContentBlockerDetected(true);
             })
             .finally(() => {
@@ -127,7 +136,38 @@ const App = () => {
                 setCommentVisibility(new Array(fetchedComments.length).fill(true));
             })
             .catch(error => {
-                console.error('Fetch error:', error);
+                console.error('Comment fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
+            });
+    };
+
+    const fetchUserComments = () => {
+        setLoadingComments(true);
+        fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const fetchedComments = data.data.children.map(child => ({
+                    id: child.data.id,
+                    body: child.data.body,
+                    author: child.data.author,
+                    ups: child.data.ups - child.data.downs,
+                    post_id: child.data.link_id,
+                    created_utc: child.data.created_utc,
+                    permalink: child.data.permalink,
+                    link_title: child.data.link_title,
+                    subreddit: child.data.subreddit
+                }));
+                setComments(fetchedComments);
+            })
+            .catch(error => {
+                console.error('Comment fetch error:', error);
             })
             .finally(() => {
                 setLoadingComments(false);
@@ -175,8 +215,8 @@ const App = () => {
     const renderPageHeader = () => {
         return (
             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); }}>
-                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false);; setViewingAbout(false); setSidebarOpen(true) }}>
+                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); }}>
+                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); setSidebarOpen(true) }}>
                         <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Zennit Icon" className="w-8 h-8" />
                     </button>
                     <div className="ml-2">
@@ -215,29 +255,63 @@ const App = () => {
 
     const renderPostFeed = () => {
         return (
-            posts.map((post, index) => (
-                <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
-                    <div className="flex justify-between items-center">
-                        <div className="flex-1 overflow-hidden">
-                            <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2"></i>}{post.title.replace(/&amp;/g, '&')}</span>
+            posts
+                .filter(post => showNSFWPosts || !post.nsfw)
+                .map((post, index) => (
+                    <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                        {selectedSubreddit.startsWith('user/') || selectedSubreddit.startsWith('u/') ? (
+                            <span className="text-gray-400 text-sm">{post.subreddit}</span>
+                        ) : null}
+                        <div className="flex justify-between items-center">
+                            <div className="flex-1 overflow-hidden">
+                                <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
+                            </div>
+                            <div className="text-gray-400 ml-4 flex-shrink-0">
+                                <span className="flex items-center">
+                                    <i className="fas fa-arrow-up mr-1"></i>
+                                    {formatUpvotes(post.ups)}
+                                </span>
+                            </div>
+                            <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => viewPost(post.id)}>
+                                View Post
+                            </button>
                         </div>
-                        <div className="text-gray-400 ml-4 flex-shrink-0">
-                            <span className="flex items-center">
-                                <i className="fas fa-arrow-up mr-1"></i>
-                                {formatUpvotes(post.ups)}
-                            </span>
+                        <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                            <span>by {post.author}</span>
+                            <span>{formatDate(post.created_utc)}</span>
                         </div>
-                        <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => viewPost(post.id)}>
-                            View Post
-                        </button>
                     </div>
-                    <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                        <span>by {post.author}</span>
-                        <span>{formatDate(post.created_utc)}</span>
-                    </div>
+                )
+            )
+        );
+    };
+
+    const renderTabSlider = () => {
+        return (
+            <div className="relative mb-4">
+                <div className="flex justify-around">
+                    <button 
+                        className={`p-2 ${activeUserTab === 'posts' ? 'text-white' : 'text-gray-300'}`} 
+                        onClick={() => {
+                            setActiveUserTab('posts');
+                            setSelectedPost(null);
+                        }}
+                    >
+                        Posts
+                    </button>
+                    <button 
+                        className={`p-2 ${activeUserTab === 'comments' ? 'text-white' : 'text-gray-300'}`} 
+                        onClick={() => {
+                            setActiveUserTab('comments');
+                            fetchUserComments(selectedSubreddit);
+                        }}
+                    >
+                        Comments
+                    </button>
                 </div>
-            ))
-        )
+                <div className={`absolute bottom-0 left-0 h-1 bg-gray-700 transition-all duration-300 ${activeUserTab === 'posts' ? 'w-1/2' : 'w-1/2 left-1/2'}`}></div>
+            </div>
+        );
     };
 
     useEffect(() => {
@@ -252,6 +326,7 @@ const App = () => {
     const viewPost = (postId) => {
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         setSelectedPost(post);
+        setToastMessage(`${selectedPost}`)
         fetchComments(postId);
         setViewingSaved(false);
     };
@@ -330,18 +405,86 @@ const App = () => {
     const addSubreddit = () => {
         if (newSubreddit) {
             let formattedSubreddit = newSubreddit.trim();
-            if (formattedSubreddit.startsWith('user/') && formattedSubreddit.includes('/m/')) {
-                const multiRedditName = formattedSubreddit.split('/m/')[1];
-                setSubreddits([...subreddits, { name: multiRedditName, original: formattedSubreddit }]);
-            } else if (formattedSubreddit.startsWith('u/') && !formattedSubreddit.includes('/m/')) {
-                setSubreddits([...subreddits, { name: formattedSubreddit }]);
+            const lowerCaseSubreddit = formattedSubreddit.toLowerCase();
+            if ((lowerCaseSubreddit.startsWith('user/') || lowerCaseSubreddit.startsWith('u/')) && formattedSubreddit.includes('/m/')) {
+                fetch(`https://www.reddit.com/${formattedSubreddit}.json`)
+                    .then(response => {
+                        if (response.ok) {
+                            const multiRedditName = formattedSubreddit.split('/m/')[1];
+                            setSubreddits([...subreddits, { name: multiRedditName, original: formattedSubreddit }]);
+                        } else {
+                            return response.json().then(data => {
+                                if (data.error === 404) {
+                                    setErrorMessage('This multi-reddit is either private or not exist.');
+                                }
+                                setShowErrorPopup(true);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        setErrorMessage('An error occurred while fetching the multi-reddit.');
+                        setShowErrorPopup(true);
+                    }
+                );
+            } else if ((lowerCaseSubreddit.startsWith('user/') || lowerCaseSubreddit.startsWith('u/')) && !formattedSubreddit.includes('/m/')) {
+                fetch(`https://www.reddit.com/user/${formattedSubreddit.substring(2)}.json`)
+                    .then(response => {
+                        if (response.ok) {
+                            setSubreddits([...subreddits, { name: formattedSubreddit }]);
+                            setNewSubreddit('');
+                        } else {
+                            return response.json().then(data => {
+                                if (data.error === 404) {
+                                    setErrorMessage('User  does not exist.');
+                                } else if (data.error === 403) {
+                                    setErrorMessage('User  is suspended.');
+                                }
+                                setShowErrorPopup(true);
+                            });
+                        }
+                    })
+            } else if (formattedSubreddit.startsWith('m/')) {
+                setErrorMessage('Please specify the user that owns the multi-reddit.\nExample: user/00403/m/Feed');
+                setShowErrorPopup(true);
             } else {
                 if (!formattedSubreddit.startsWith('r/')) {
                     formattedSubreddit = 'r/' + formattedSubreddit;
                 }
-                setSubreddits([...subreddits, { name: formattedSubreddit }]);
+                fetch(`https://www.reddit.com/${formattedSubreddit}.json`)
+                    .then(response => {
+                        if (response.ok) {
+                            setSubreddits([...subreddits, { name: formattedSubreddit }]);
+                            setNewSubreddit('');
+                        } else {
+                            return response.json().then(data => {
+                                if (data.error === 403 && data.reason === "private") {
+                                    setErrorMessage('This subreddit is private.');
+                                } else if (data.error === 404 && data.reason === "banned") {
+                                    setErrorMessage('This subreddit is banned.');
+                                } else if (data.error === 404) {
+                                    fetch(`https://www.reddit.com/subreddits/search.json?q=${formattedSubreddit}`)
+                                        .then(searchResponse => searchResponse.json())
+                                        .then(searchData => {
+                                            if (searchData.data.children.length === 0) {
+                                                setErrorMessage('This subreddit does not exist.');
+                                            } else {
+                                                setErrorMessage('This subreddit is not accessible.');
+                                            }
+                                            setShowErrorPopup(true);
+                                        });
+                                } else {
+                                    setSubreddits([...subreddits, { name: formattedSubreddit }]);
+                                }
+                                setShowErrorPopup(true);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        setErrorMessage(`Unable to find ${formattedSubreddit}.`);
+                        setShowErrorPopup(true);
+                    }
+                );
             }
-    
             setNewSubreddit('');
         }
     };
@@ -408,7 +551,7 @@ const App = () => {
                 <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
                     <div className="flex justify-between items-start">
                         <div className="flex-1 title-container overflow-hidden">
-                            <span className="whitespace-normal">{selectedPost.title.replace(/&amp;/g, '&')}</span>
+                            <span className="whitespace-normal">{selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{selectedPost.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{selectedPost.title.replace(/&amp;/g, '&')}</span>
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
                             <span className="flex items-center">
@@ -452,9 +595,13 @@ const App = () => {
                     <i className="fas fa-yin-yang fa-spin fa-10x"></i>
                 </div>
             )}
-            {comments.map((comment, index) => (
-                <Comment key={index} comment={comment} />
-            ))}
+            {disableComments ? (
+                <div className="text-gray-400 mt-2">Comments have been disabled in the config settings.</div>
+            ) : (
+                comments.map((comment, index) => (
+                    <Comment key={index} comment={comment} />
+                ))
+            )}
             <button className="mt-4 p-2 bg-gray-700 text-white rounded" onClick={() => setSelectedPost(null)}>Back to Posts</button>
         </div>
         )
@@ -569,7 +716,7 @@ const App = () => {
                         setPostTitle(titleMatch[1]);
                     }
                 } catch (error) {
-                    console.error('Error fetching page title:', error);
+                    console.error(':(')
                 }
             };
 
@@ -620,7 +767,7 @@ const App = () => {
         formattedText = formattedText.replace(/^\s*&gt;\s*(.+)$/gm, (match, content) => {
             return `<blockquote style="border-left: 4px solid #ccc; padding-left: 10px; color: #999;">${content.trim()}</blockquote>`;
         });
-
+        
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
@@ -752,18 +899,49 @@ const App = () => {
                 </div>
                 {isVisible && (
                     <div className="comment-body">
-                        <div>{renderFormattedText(comment.body)}</div>
-
-                        {comment.replies && comment.replies.length > 0 && (
-                            <div className="ml-4">
-                                {comment.replies.map((reply, index) => (
-                                    <Comment key={index} comment={reply} />
-                                ))}
-                            </div>
-                        )}
+                        <div className="ml-2">{renderFormattedText(comment.body)}</div>
+                        {disableCommentReplies ? (
+                        <div className="comment-replies-disabled"></div>
+                        ) : (
+                            comment.replies && comment.replies.length > 0 && (
+                                <div className="ml-4">
+                                    {comment.replies.map((reply, index) => (
+                                        <Comment key={index} comment={reply} />
+                                    ))}
+                                </div>
+                            )
+                        )
+                    }
                     </div>
                 )}
             </div>
+        );
+    };
+
+    const renderUserComments = () => {
+        return (
+            comments.map((comment, index) => (
+                <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                    <div className="flex justify-between items-center">
+                        <div className="flex-1 overflow-hidden text-left">
+                            <span className="text-white whitespace-normal">
+                                {comment.link_title.replace(/&amp;/g, '&')}
+                            </span>
+                        </div>
+                        <div className="text-gray-400 ml-4 flex-shrink-0">
+                            <span className="flex items-center">
+                                <i className="fas fa-arrow-up mr-1"></i>
+                                {formatUpvotes(comment.ups)}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="text-gray-400 ml-2 italic">{renderFormattedText(comment.body)}</div>
+                    <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                        <span>by {comment.author}</span>
+                        <span>{formatDate(comment.created_utc)}</span>
+                    </div>
+                </div>
+            ))
         );
     };
 
@@ -804,23 +982,14 @@ const App = () => {
 
 
     // Settings page, components and functions
-    const SettingsPage = ({ onClose, onViewSavedPosts }) => {
+    const SettingsPage = ({ onClose, onViewSavedPosts, onViewConfig }) => {
 
         return (
-            <div className="bg-gray-800 p-4 rounded">
+            <div ref={settingsRef} className="bg-gray-800 p-4 rounded">
                 <h2 className="text-white text-xl mb-4">Settings</h2>
-                <select 
-                    className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
-                    style = {{ 'text-align': 'center' }}
-                    value={currentTheme} 
-                    onChange={(e) => changeTheme(e.target.value)}
-                >
-                    {themes.map((theme, index) => (
-                        <option key={index} value={theme.name}>
-                            {theme.name}
-                        </option>
-                    ))}
-                </select>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={onViewConfig}>
+                    Config
+                </button>
                 <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={() => { onViewSavedPosts(); onClose(); }}>
                     View Saved Posts
                 </button>
@@ -838,30 +1007,118 @@ const App = () => {
         );
     };
 
+    const handleClickOutsideSettings = (event) => {
+        if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+            setShowSettings(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showSettings) {
+            document.addEventListener('mousedown', handleClickOutsideSettings);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutsideSettings);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideSettings);
+        };
+    }, [showSettings]);
+    
+
+    const ConfigPage = ({ onClose }) => {
+        return (
+            <div className="bg-gray-800 p-4 rounded">
+                <h2 className="text-white text-xl mb-4">Config</h2>
+                <h3 className="text-white text-lg mb-2">Theme Selection</h3>
+                <select 
+                    className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
+                    style={{ 'text-align': 'center' }}
+                    value={currentTheme} 
+                    onChange={(e) => changeTheme(e.target.value)}
+                >
+                    {themes.map((theme, index) => (
+                        <option key={index} value={theme.name}>
+                            {theme.name}
+                        </option>
+                    ))}
+                </select>
+                <div className="mt-4">
+                    <h3 className="text-white text-lg mb-2">Content Preferences</h3>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Show NSFW Posts</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={showNSFWPosts} 
+                                onChange={() => setShowNSFWPosts(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${showNSFWPosts ? 'on' : 'off'}`} onClick={() => setShowNSFWPosts(prev => !prev)}>
+                                <div className={`toggle-thumb ${showNSFWPosts ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comments</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disableComments} 
+                                onChange={() => setDisableComments(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disableComments ? 'on' : 'off'}`} onClick={() => setDisableComments(prev => !prev)}>
+                                <div className={`toggle-thumb ${disableComments ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comment Replies</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disableCommentReplies} 
+                                onChange={() => setDisableCommentReplies(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disableCommentReplies ? 'on' : 'off'}`} onClick={() => setDisableCommentReplies(prev => !prev)}>
+                                <div className={`toggle-thumb ${disableCommentReplies ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
+                    Close
+                </button>
+            </div>
+        );
+    };
+
+    const handleViewConfig = () => {
+        setShowConfig(true);
+        setShowSettings(false);
+    };
+
+    const changeTheme = (theme) => {
+        setCurrentTheme(theme);
+    };
+
     useEffect(() => {
         document.body.className = currentTheme === 'Ocean' ? '' : currentTheme.toLowerCase();
         localStorage.setItem('theme', currentTheme);
     }, [currentTheme]);
 
-    const CustomSettings = ({ onClose }) => {
-        return (
-            <select 
-                className="mt-2 w-full p-2 bg-gray-700 text-white rounded" 
-                style = {{ 'text-align': 'center' }}
-                value={currentTheme} 
-                onChange={(e) => changeTheme(e.target.value)}
-            >
-                {themes.map((theme, index) => (
-                    <option key={index} value={theme.name}>
-                        {theme.name}
-                    </option>
-                ))}
-            </select>
-        )};
+    useEffect(() => {
+        localStorage.setItem('showNSFWPosts', JSON.stringify(showNSFWPosts));
+    }, [showNSFWPosts]);
 
-    const changeTheme = (theme) => {
-        setCurrentTheme(theme);
-    };
+    useEffect(() => {
+        localStorage.setItem('disableComments', JSON.stringify(disableComments));
+    }, [disableComments]);
+
+    useEffect(() => {
+        localStorage.setItem('disableCommentReplies', JSON.stringify(disableCommentReplies));
+    }, [disableCommentReplies]);
 
     //_ Function and support functions for saved posts
     const renderSavedPosts = () => {
@@ -925,12 +1182,6 @@ const App = () => {
                 </div>
             </div>
         )
-    };
-
-    const handleSavedPostRightClick = (e, post) => {
-        e.preventDefault();
-        setPostToDelete(post);
-        setShowDeletePopup(true);
     };
 
     const confirmDeletePost = () => {
@@ -1013,6 +1264,11 @@ const App = () => {
         );
     };
 
+    const handleViewAbout = () => {
+        setViewingAbout(true);
+        setShowSettings(false);
+    };
+
     const fetchCommitInfo = async () => {
         try {
             const response = await fetch('https://api.github.com/repos/9-5/Zennit/commits/main'); // Adjust the branch if necessary
@@ -1032,11 +1288,6 @@ const App = () => {
     useEffect(() => {
         fetchCommitInfo();
     }, []);
-
-    const handleViewAbout = () => {
-        setViewingAbout(true);
-        setShowSettings(false);
-    };
 
 
 
@@ -1079,6 +1330,19 @@ const App = () => {
         );
     };
 
+    const renderErrorPopup = () => {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-gray-800 p-4 rounded">
+                    <div className="text-white mb-4">{errorMessage}</div>
+                    <div className="flex justify-end">
+                        <button className="p-2 bg-gray-700 text-white rounded" onClick={() => setShowErrorPopup(false)}>Close</button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="flex h-screen">
             <div>
@@ -1088,16 +1352,47 @@ const App = () => {
             <div className="flex-1 bg-gray-800 p-4 flex flex-col">
                 {contentBlockerDetected && (renderContentBlocked())}
                 {renderPageHeader()}
-                {showSettings && <SettingsPage onClose={() => setShowSettings(false)} onViewSavedPosts={handleViewSavedPosts} />}
+                {showSettings && <SettingsPage onClose={() => setShowSettings(false)} onViewSavedPosts={handleViewSavedPosts} onViewConfig={handleViewConfig} />}
                 <div className="flex-1 overflow-y-auto">
                     {loadingPosts && (renderLoadingSpinner())}
-                    {viewingSaved ? (renderViewSavedPost()) : selectedPost ? (renderSelectedPost()) : viewingAbout ? (renderAbout()) : (renderPostFeed())}
+                    
+                    {selectedSubreddit.startsWith('u/') ? (
+                        <>
+                            {showConfig ? (
+                                <ConfigPage onClose={() => setShowConfig(false)} />
+                            ) : viewingSaved ? (
+                                renderViewSavedPost()
+                            ) : selectedPost ? (
+                                renderSelectedPost()
+                            ) : viewingAbout ? (
+                                renderAbout()
+                            ) : (
+                                <>
+                                    {renderTabSlider()}
+                                    {activeUserTab === 'posts' ? renderPostFeed() : renderUserComments()} {/* Conditional rendering */}
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        showConfig ? (
+                            <ConfigPage onClose={() => setShowConfig(false)} />
+                        ) : viewingSaved ? (
+                            renderViewSavedPost()
+                        ) : selectedPost ? (
+                            renderSelectedPost()
+                        ) : viewingAbout ? (
+                            renderAbout()
+                        ) : (
+                            renderPostFeed()
+                        )
+                    )}
                 </div>
                 {enlargedImage && (renderEnlargedPostImages())}
                 {enlargedCommentImage && (renderEnlargedCommentImages())}
             </div>
             {showDeletePopup && (renderDeleteSavedPostPopup())}
             {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+            {showErrorPopup && renderErrorPopup()}
         </div>
     )
 }

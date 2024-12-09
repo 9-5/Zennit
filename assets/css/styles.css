@@ -9,13 +9,6 @@ body {
     overflow-wrap: break-word; /* Allows long words to break */
     white-space: normal; /* Allows text to wrap */
 }
-.post-body {
-    max-width: 100%;
-    word-wrap: break-word;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-}
 .comment-body {
     max-width: 100%;
     word-wrap: break-word;
@@ -26,6 +19,7 @@ body {
 .hash {
     font-size: 13px;
     font-family: 'Courier New', Courier, monospace;
+    background-color: #d3d3d3;
     word-wrap: break-word;
     overflow-wrap: break-word; 
 }
@@ -36,6 +30,32 @@ body {
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: keep-all;
+}
+.toggle-switch {
+    width: 37.5px;
+    height: 18px;
+    background-color: #ccc;
+    border-radius: 50px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.toggle-thumb {
+    width: 14px;
+    height: 14px;
+    background-color: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: -1px;
+    transition: transform 0.2s;
+}
+.toggle-thumb.on {
+    transform: translateX(26px);
+}
+
+.toggle-switch.on {
+    background-color: #4caf50;
 }
 ::-webkit-scrollbar {
     display: none;
