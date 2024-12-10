@@ -50,23 +50,18 @@ const App = () => {
         setLoadingPosts(true);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
-            const username = selectedSubreddit.substring(2);
-            fetchUrl = `https://www.reddit.com/user/${username}/submitted/${sort}.json?count=${(page - 1) * 25}`;
+          const username = selectedSubreddit.substring(2);
+          fetchUrl = `https://www.reddit.com/user/${username}/submitted/${sort}.json?count=${(page - 1) * 25}`;
         } else {
-            fetchUrl = `https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}`;
+          fetchUrl = `https://www.reddit.com/${selectedSubreddit}/${sort}.json?count=${(page - 1) * 25}`;
         }
-    
+      
         fetch(fetchUrl)
-            .then(response => {
-                if (!response.ok) {
-                    setContentBlockerDetected(true);
-                    setErrorMessage(`Error: ${response.status} ${response.statusText}`);
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const fetchedPosts = data.data.children.map(child => ({
+          .then(response => response.json())
+          .then(data => {
+            const fetchedPosts = data.data.children.map(child => {
+                const isEdited = child.data.edited;
+                return {
                     id: child.data.id,
                     title: child.data.title,
                     author: child.data.author,
@@ -77,26 +72,25 @@ const App = () => {
                     gallery_data: child.data.gallery_data,
                     media_metadata: child.data.media_metadata,
                     pinned: child.data.stickied,
-                    edited: child.data.edited,
                     ups: child.data.ups - child.data.downs,
                     media: child.data.media,
                     flair: child.data.link_flair_text || '',
-                    nsfw: child.data.over_18
-                }));
-                
-                setPosts(prevPosts => [...fetchedPosts]);
-                setContentBlockerDetected(false);
-
-            })
-            .catch(error => {
-                console.error('Post fetch error:', error);
-                setContentBlockerDetected(true);
-            })
-            .finally(() => {
-                setLoadingPosts(false);
+                    nsfw: child.data.over_18,
+                    isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false // Check if isEdited is a number
+                };
             });
-    };
-
+      
+            setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
+            setContentBlockerDetected(false);
+          })
+          .catch(error => {
+            console.error('Post fetch error:', error);
+            setContentBlockerDetected(true);
+          })
+          .finally(() => {
+            setLoadingPosts(false);
+          });
+      }
     const fetchComments = (postId) => {
         setLoadingComments(true);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
@@ -559,6 +553,7 @@ const App = () => {
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
                             <span className="flex items-center">
+                                {console.log(selectedPost.isEdited)}
                                 <i className="fas fa-arrow-up mr-1"></i>
                                 {formatUpvotes(selectedPost.ups)}
                             </span>
@@ -1137,7 +1132,7 @@ const App = () => {
                     </div>
                     <div className="text-gray-400 ml-4 flex-shrink-0">
                         <span className="flex items-center">
-                            {post.edited && <i className="fas fa-pencil-alt text-gray-400" title="Edited"></i>}
+                            {post.edited && <i className="fas fa-pencil-alt text-gray-400 ml-2" title="Edited"></i>}
                             <i className="fas fa-arrow-up mr-1"></i>
                             {formatUpvotes(post.ups)}
                         </span>
