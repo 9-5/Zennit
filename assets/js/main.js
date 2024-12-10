@@ -77,6 +77,7 @@ const App = () => {
                     gallery_data: child.data.gallery_data,
                     media_metadata: child.data.media_metadata,
                     pinned: child.data.stickied,
+                    edited: child.data.edited,
                     ups: child.data.ups - child.data.downs,
                     media: child.data.media,
                     flair: child.data.link_flair_text || '',
@@ -110,13 +111,14 @@ const App = () => {
             .then(data => {
                 const postTitle = data[0].data.children[0].data.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
                 const fetchedComments = data[1].data.children.map(child => {
+                    const isOP = child.data.author === post.author;
+                    const isEdited = child.data.edited;
                     const commentData = {
                         author: child.data.author,
                         body: child.data.body,
                         media_metadata: child.data.media_metadata,
                         pinned: child.data.stickied,
                         ups: child.data.ups - child.data.downs,
-                        isOP: child.data.author === post.author,
                         replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                             author: reply.data.author,
                             body: reply.data.body,
@@ -131,7 +133,7 @@ const App = () => {
                         });
                     }
     
-                    return { ...commentData, isVisible: true, isOP};
+                    return { ...commentData, isVisible: true, isOP, isEdited };
                 });
     
                 setComments(fetchedComments);
@@ -269,7 +271,7 @@ const App = () => {
                                 <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
                             </div>
                             <div className="text-gray-400 ml-4 flex-shrink-0">
-                                {post.flair && <span className="flair">{post.flair}</span>}
+                            {post.flair && <span className="flair">{post.flair}</span>}
                                 <span className="flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {formatUpvotes(post.ups)}
@@ -893,12 +895,14 @@ const App = () => {
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
                 <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
-                    {comment.pinned && <i className="fas fa-thumbtack text-green-500" title="Pinned"></i>}
                     <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
-                    <span className="ml-1">by {comment.author} {comment.isOP && <span className="text-green-500 ml-1">[OP]</span>}</span>
+                    <span className="ml-1">by {comment.author}{comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="OP"></i>}
+                    </span>
                     <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
+                    {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
+                    {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400" title="Edited"></i>}
                 </div>
                 {isVisible && (
                     <div className="comment-body">
@@ -1133,6 +1137,7 @@ const App = () => {
                     </div>
                     <div className="text-gray-400 ml-4 flex-shrink-0">
                         <span className="flex items-center">
+                            {post.edited && <i className="fas fa-pencil-alt text-gray-400" title="Edited"></i>}
                             <i className="fas fa-arrow-up mr-1"></i>
                             {formatUpvotes(post.ups)}
                         </span>
