@@ -36,116 +36,169 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    vertical-align: text-bottom;
-    font-size: smaller;
+    vertical-align: baseline;
 }
-.post-container {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
-}
-.comment-container {
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-}
-.post-body {
-    margin-top: 10px;
-}
-.comment-body {
-    margin-top: 5px;
-}
-.post-meta {
-    font-size: 0.8em;
-    color: #aaa;
-}
-.comment-meta {
-    font-size: 0.7em;
-    color: #aaa;
-}
-a {
-    color: #89b4fa;
-}
-a:hover {
-    color: #b4d4ff;
-}
-.subreddit-sidebar {
-    width: 250px;
-    background-color: #2c2c2c;
-    padding: 20px;
+.sidebar {
     position: fixed;
     top: 0;
     left: 0;
     height: 100%;
+    width: 250px;
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 20px;
     overflow-y: auto;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
 }
 .subreddit-list {
     list-style: none;
     padding: 0;
 }
+
 .subreddit-list li {
     margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
+
+.subreddit-list li:hover {
+    background-color: #34495e;
+}
+
 .subreddit-list li a {
-    color: #fff;
-    text-decoration: none;
     display: block;
-    padding: 5px;
-    border-radius: 5px;
+    padding: 10px;
+    text-decoration: none;
+    color: #fff;
 }
-.subreddit-list li a:hover {
-    background-color: #444;
+
+.subreddit-list li.active {
+    background-color: #3498db;
 }
+.subreddit-list li.active:hover {
+    background-color: #2980b9;
+}
+
+.subreddit-input-container {
+    margin-bottom: 20px;
+}
+
 .subreddit-input {
     width: 100%;
     padding: 8px;
-    margin-bottom: 10px;
-    background-color: #444;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #34495e;
     color: #fff;
-    border: none;
-    border-radius: 5px;
 }
-.subreddit-button {
-    background-color: #89b4fa;
+
+.subreddit-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+.add-subreddit-button {
+    background-color: #3498db;
     color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-subreddit-button:hover {
+    background-color: #2980b9;
+}
+.subreddit-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.subreddit-list li:last-child {
+    border-bottom: none;
+}
+.error-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    text-align: center;
+}
+.delete-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    text-align: center;
+}
+
+.delete-popup button {
+    margin: 0 10px;
     padding: 8px 12px;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    width: 100%;
 }
-.subreddit-button:hover {
-    background-color: #b4d4ff;
+
+.delete-popup button.confirm {
+    background-color: #dc3545;
+    color: white;
 }
-.post-feed {
-    margin-left: 270px;
-    padding: 20px;
+
+.delete-popup button.cancel {
+    background-color: #6c757d;
+    color: white;
 }
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+
+.delete-popup button:hover {
+    opacity: 0.8;
+}
+
+.sidebar-header {
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 1000;
+    margin-bottom: 15px;
 }
-.modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    color: #333;
-}
-.modal-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+
+.sidebar-header img {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
     cursor: pointer;
 }
-.toast {
+.toast-container {
     position: fixed;
     bottom: 20px;
     left: 20px;
@@ -153,140 +206,308 @@ a:hover {
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
+    z-index: 1000;
+}
+
+.toast-container button {
+    margin-left: 10px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+.post-image-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     z-index: 1001;
 }
-.save-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 8px 12px;
+
+.post-image-container img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+
+.post-image-container .close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
     border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1002;
+}
+.user-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background-color: #333;
     border-radius: 5px;
+    padding: 10px;
+    z-index: 1000;
+}
+
+.user-dropdown button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 5px 0;
+    background: none;
+    border: none;
+    color: white;
     cursor: pointer;
 }
-.save-button:hover {
-    background-color: #45a049;
-}
-#search-results-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #2c2c2c;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    max-width: 80%;
-    max-height: 80%;
-    overflow-y: auto;
-}
 
-#search-results-container h2 {
-    color: #fff;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-#search-results-container ul {
-    list-style: none;
-    padding: 0;
-}
-
-#search-results-container li {
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #444;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-#search-results-container li:hover {
+.user-dropdown button:hover {
     background-color: #555;
 }
-
-#search-results-container a {
-    color: #89b4fa;
-    text-decoration: none;
-    display: block;
+.thumbnail {
+    max-width: 100px;
+    max-height: 100px;
+    margin-right: 10px;
+}
+/* AMOLED Theme */
+.amoled {
+    background-color: #000000;
+    color: #ffffff;
 }
 
-#search-results-container a:hover {
-    text-decoration: underline;
+.amoled .bg-gray-200 {
+    background-color: #1a1a1a;
 }
 
-#search-results-container button {
-    background-color: #89b4fa;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    display: block;
-    margin: 20px auto 0;
-    transition: background-color 0.3s ease;
+.amoled .bg-gray-100 {
+    background-color: #0d0d0d;
 }
 
-#search-results-container button:hover {
-    background-color: #b4d4ff;
+.amoled .bg-white {
+    background-color: #000000;
 }
 
-.amethyst body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #2a1b3e;
-    color: #e0d6f2;
-    white-space: normal;
+.amoled .text-gray-700 {
+    color: #ffffff;
 }
 
-.amethyst a {
-    color: #b0a1c1;
+.amoled .border-gray-200 {
+    border-color: #333333;
 }
 
-.amethyst a:hover {
-    color: #e0d6f2;
+.amoled .text-gray-500 {
+    color: #b3b3b3;
 }
 
-.amethyst .subreddit-sidebar {
-    background-color: #3e2a6b;
+.amoled .text-blue-500 {
+    color: #66b3ff;
 }
 
-.amethyst .subreddit-list li a {
-    color: #e0d6f2;
+.amoled .hover\:bg-gray-50 {
+    background-color: #1a1a1a;
 }
 
-.amethyst .subreddit-list li a:hover {
-    background-color: #5b4a8b;
+.amoled .focus\:ring-blue-500 {
+    --tw-ring-color: #66b3ff;
 }
 
-.amethyst .subreddit-input {
-    background-color: #5b4a8b;
-    color: #e0d6f2;
+.amoled .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.amethyst .subreddit-button {
-    background-color: #4a1c6b;
-    color: #e0d6f2;
+.amoled .ring-1 {
+    --tw-ring-shadow: 0 0 #0000;
 }
 
-.amethyst .subreddit-button:hover {
-    background-color: #7a6b9b;
+.amoled .ring-blue-500 {
+    --tw-ring-color: #66b3ff;
 }
 
-.amethyst .modal-content {
-    background-color: #e0d6f2;
-    color: #2a1b3e;
+.amoled .bg-red-100 {
+    background-color: #330000;
 }
 
-.amethyst .toast {
-    background-color: #3e2a6b;
-    color: #e0d6f2;
+.amoled .text-red-700 {
+    color: #ff6666;
 }
 
-.amethyst .save-button {
-    background-color: #ffcccb;
-    color: #2a1b3e;
+.amoled .border-red-500 {
+    border-color: #ff6666;
 }
 
-.amethyst .save-button:hover {
+/* Dark Theme */
+.dark {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.dark .bg-gray-200 {
+    background-color: #2c2c2c;
+}
+
+.dark .bg-gray-100 {
+    background-color: #1e1e1e;
+}
+
+.dark .bg-white {
+    background-color: #121212;
+}
+
+.dark .text-gray-700 {
+    color: #ffffff;
+}
+
+.dark .border-gray-200 {
+    border-color: #444444;
+}
+
+.dark .text-gray-500 {
+    color: #aaaaaa;
+}
+
+.dark .text-blue-500 {
+    color: #80bfff;
+}
+
+.dark .hover\:bg-gray-50 {
+    background-color: #2c2c2c;
+}
+
+.dark .focus\:ring-blue-500 {
+    --tw-ring-color: #80bfff;
+}
+
+.dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .ring-1 {
+    --tw-ring-shadow: 0 0 #0000;
+}
+
+.dark .ring-blue-500 {
+    --tw-ring-color: #80bfff;
+}
+
+.dark .bg-red-100 {
+    background-color: #440000;
+}
+
+.dark .text-red-700 {
+    color: #ff8080;
+}
+
+.dark .border-red-500 {
+    border-color: #ff8080;
+}
+
+/* Light Theme */
+.light {
+    background-color: #f9f9f9;
+    color: #333333;
+}
+
+.light .bg-gray-200 {
+    background-color: #e5e7eb;
+}
+
+.light .bg-gray-100 {
+    background-color: #f3f4f6;
+}
+
+.light .bg-white {
+    background-color: #ffffff;
+}
+
+.light .text-gray-700 {
+    color: #333333;
+}
+
+.light .border-gray-200 {
+    border-color: #d1d5db;
+}
+
+.light .text-gray-500 {
+    color: #6b7280;
+}
+
+.light .text-blue-500 {
+    color: #2563eb;
+}
+
+.light .hover\:bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+.light .focus\:ring-blue-500 {
+    --tw-ring-color: #2563eb;
+}
+
+.light .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.light .ring-1 {
+    --tw-ring-shadow: 0 0 #0000;
+}
+
+.light .ring-blue-500 {
+    --tw-ring-color: #2563eb;
+}
+
+.light .bg-red-100 {
+    background-color: #fef2f2;
+}
+
+.light .text-red-700 {
+    color: #b91c1c;
+}
+
+.light .border-red-500 {
+    border-color: #ef4444;
+}
+
+/* Amethyst Theme */
+.amethyst {
+    background-color: #1e1e1e; 
+    color: #ffffff;
+}
+
+.amethyst .bg-gray-200 {
+    background-color: #4a3f72; 
+}
+
+.amethyst .bg-gray-100 {
+    background-color: #3e2a6b; 
+}
+
+.amethyst .bg-white {
+    background-color: #301e4a; 
+}
+
+.amethyst .text-gray-700 {
+    color: #e0d6f2; 
+}
+
+.amethyst .border-gray-200 {
+    border-color: #5b4a8b; 
+}
+
+.amethyst .text-gray-500 {
+    color: #b0a1c1; 
+}
+
+.amethyst .text-blue-500 {
+    color: #4a1c6b; 
+}
+
+.amethyst .hover\:bg-gray-50 {
     background-color: rgba(224, 242, 254, 0.5); 
 }
 
