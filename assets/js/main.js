@@ -34,8 +34,10 @@ const App = () => {
     const themes = [{ name: 'Ocean', className: '' }, { name: 'Sky', className: 'sky' }, { name: 'Forest', className: 'forest' }, { name: 'Bamboo', className: 'bamboo' }, { name: 'Crimson', className: 'crimson' }, { name: 'Blush', className: 'blush' }, { name: 'Petal', className: 'petal' }, { name: 'Lotus', className: 'lotus' }, { name: 'Amethyst', className: 'amethyst' }];
     const [currentTheme, setCurrentTheme] = useState(() => {return localStorage.getItem('theme') || 'Ocean';});
     const [showNSFWPosts, setShowNSFWPosts] = useState(() => JSON.parse(localStorage.getItem('showNSFWPosts')) || false);
+    const [disablePostFlairs, setDisablePostFlairs] = useState(() => JSON.parse(localStorage.getItem('disablePostFlairs')) || false);
     const [disableComments, setDisableComments] = useState(() => JSON.parse(localStorage.getItem('disableComments')) || false);
     const [disableCommentReplies, setDisableCommentReplies] = useState(() => JSON.parse(localStorage.getItem('disableCommentReplies')) || false);
+    const [disableCommentTags, setDisableCommentTags] = useState(() => JSON.parse(localStorage.getItem('disableCommentReplies')) || false);
     const [viewingAbout, setViewingAbout] = useState(false);
     const [commitInfo, setCommitInfo] = useState(null);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
@@ -48,6 +50,7 @@ const App = () => {
     // Main functions.
     const fetchPosts = (page) => {
         setLoadingPosts(true);
+        setPosts([]);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
           const username = selectedSubreddit.substring(2);
@@ -76,7 +79,8 @@ const App = () => {
                     media: child.data.media,
                     flair: child.data.link_flair_text || '',
                     nsfw: child.data.over_18,
-                    isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false // Check if isEdited is a number
+                    isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
+                    locked: child.data.locked
                 };
             });
       
@@ -93,6 +97,7 @@ const App = () => {
       }
     const fetchComments = (postId) => {
         setLoadingComments(true);
+        setComments([]);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         const subredditToUse = post.subreddit;
         fetch(`https://www.reddit.com/${subredditToUse}/comments/${postId}.json?sort=${commentSort}`)
@@ -112,13 +117,16 @@ const App = () => {
                         body: child.data.body,
                         media_metadata: child.data.media_metadata,
                         pinned: child.data.stickied,
+                        isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
                         ups: child.data.ups - child.data.downs,
+                        locked: child.data.locked,
                         replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                             author: reply.data.author,
                             body: reply.data.body,
                             media_metadata: reply.data.media_metadata,
                             pinned: reply.data.stickied,
                             ups: reply.data.ups - reply.data.downs,
+                            isEdited: (typeof reply.data.edited === 'number') ? formatDate(reply.data.edited) : false
                         })) : []
                     };
                     if (commentData.media_metadata && commentData.media_metadata.length > 0) {
@@ -143,6 +151,7 @@ const App = () => {
 
     const fetchUserComments = () => {
         setLoadingComments(true);
+        setComments([]);
         fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json`)
             .then(response => {
                 if (!response.ok) {
@@ -265,7 +274,7 @@ const App = () => {
                                 <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
                             </div>
                             <div className="text-gray-400 ml-4 flex-shrink-0">
-                            {post.flair && <span className="flair">{post.flair}</span>}
+                            {!disablePostFlairs && (post.flair && <span className="flair"><strong>{post.flair}</strong></span>)}
                                 <span className="flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {formatUpvotes(post.ups)}
@@ -553,9 +562,10 @@ const App = () => {
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
                             <span className="flex items-center">
-                                {console.log(selectedPost.isEdited)}
-                                <i className="fas fa-arrow-up mr-1"></i>
+                                <i className="fas fa-arrow-up ml-2"></i>
                                 {formatUpvotes(selectedPost.ups)}
+                                {selectedPost.isEdited && (<i className="fas fa-pencil-alt text-gray-400 ml-2" title={selectedPost.isEdited}></i>)}
+                                {selectedPost.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
                             </span>
                         </div>
                     </div>
@@ -563,11 +573,11 @@ const App = () => {
                         <span>by {selectedPost.author}</span>
                         <span>{formatDate(selectedPost.created_utc)}</span>
                     </div>
+                    {!disablePostFlairs && (selectedPost.flair && <span className="flair"><strong>{selectedPost.flair}</strong></span>)}
                 </div>
                 <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                        {renderFormattedText(selectedPost.content)}
-                        {renderPostContent(selectedPost)}
-                
+                    {renderFormattedText(selectedPost.content)}
+                    {renderPostContent(selectedPost)}
                     <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
                         <i className="fas fa-share-alt"></i>  Share Post
                     </button>
@@ -893,11 +903,17 @@ const App = () => {
                     <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
-                    <span className="ml-1">by {comment.author}{comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="OP"></i>}
-                    </span>
+                    <span className="ml-1">by {comment.author}</span>
                     <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
-                    {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
-                    {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400" title="Edited"></i>}
+                    {disableCommentTags ? (<div className="comment-tags-disabled"></div>
+                    ) : (
+                        <span className="comment-tags-container flex items-center ">
+                            {comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="Original Poster"></i>}
+                            {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400 ml-2" title={comment.isEdited}></i>}
+                            {comment.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
+                            {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
+                        </span>
+                    )}
                 </div>
                 {isVisible && (
                     <div className="comment-body">
@@ -946,7 +962,7 @@ const App = () => {
             ))
         );
     };
-
+    
     const toggleCommentVisibility = (index) => {
         const updatedVisibility = [...commentVisibility];
         updatedVisibility[index] = !updatedVisibility[index];
@@ -1061,6 +1077,20 @@ const App = () => {
                         </div>
                     </div>
                     <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Post Flairs</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disablePostFlairs} 
+                                onChange={() => setDisablePostFlairs(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disablePostFlairs ? 'on' : 'off'}`} onClick={() => setDisablePostFlairs(prev => !prev)}>
+                                <div className={`toggle-thumb ${disablePostFlairs ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
                         <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comments</span>
                         <div className="relative">
                             <input 
@@ -1085,6 +1115,20 @@ const App = () => {
                             />
                             <div className={`toggle-switch ${disableCommentReplies ? 'on' : 'off'}`} onClick={() => setDisableCommentReplies(prev => !prev)}>
                                 <div className={`toggle-thumb ${disableCommentReplies ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comment Tags</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disableCommentTags} 
+                                onChange={() => setDisableCommentTags(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disableCommentTags ? 'on' : 'off'}`} onClick={() => setDisableCommentTags(prev => !prev)}>
+                                <div className={`toggle-thumb ${disableCommentTags ? 'on' : 'off'}`}></div>
                             </div>
                         </div>
                     </div>
@@ -1115,12 +1159,20 @@ const App = () => {
     }, [showNSFWPosts]);
 
     useEffect(() => {
+        localStorage.setItem('disablePostFlairs', JSON.stringify(disablePostFlairs));
+    }, [disablePostFlairs]);
+
+    useEffect(() => {
         localStorage.setItem('disableComments', JSON.stringify(disableComments));
     }, [disableComments]);
 
     useEffect(() => {
         localStorage.setItem('disableCommentReplies', JSON.stringify(disableCommentReplies));
     }, [disableCommentReplies]);
+
+    useEffect(() => {
+        localStorage.setItem('disableCommentTags', JSON.stringify(disableCommentTags));
+    }, [disableCommentTags]);
 
     //_ Function and support functions for saved posts
     const renderSavedPosts = () => {

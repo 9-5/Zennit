@@ -23,6 +23,19 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word; 
 }
+.flair {
+    display: inline-block;
+    width: 12ch;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.flair:hover {
+    overflow: visible;
+    white-space: normal;
+    z-index: 1;
+}
 .ww-anchor {
     display: inline-block;
     max-width: 300px; 
@@ -41,12 +54,12 @@ body {
     transition: background-color 0.2s;
 }
 .toggle-thumb {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     background-color: white;
     border-radius: 50%;
     position: absolute;
-    top: 2px;
+    top: 1px;
     left: -1px;
     transition: transform 0.2s;
 }
