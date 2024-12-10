@@ -79,6 +79,7 @@ const App = () => {
                     pinned: child.data.stickied,
                     ups: child.data.ups - child.data.downs,
                     media: child.data.media,
+                    flair: child.data.link_flair_text || '',
                     nsfw: child.data.over_18
                 }));
                 
@@ -115,6 +116,7 @@ const App = () => {
                         media_metadata: child.data.media_metadata,
                         pinned: child.data.stickied,
                         ups: child.data.ups - child.data.downs,
+                        isOP: child.data.author === post.author,
                         replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                             author: reply.data.author,
                             body: reply.data.body,
@@ -129,7 +131,7 @@ const App = () => {
                         });
                     }
     
-                    return { ...commentData, isVisible: true };
+                    return { ...commentData, isVisible: true, isOP};
                 });
     
                 setComments(fetchedComments);
@@ -267,6 +269,7 @@ const App = () => {
                                 <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
                             </div>
                             <div className="text-gray-400 ml-4 flex-shrink-0">
+                                {post.flair && <span className="flair">{post.flair}</span>}
                                 <span className="flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {formatUpvotes(post.ups)}
@@ -890,10 +893,11 @@ const App = () => {
         return (
             <div className="text-white bg-gray-700 p-2 rounded mt-1">
                 <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
+                    {comment.pinned && <i className="fas fa-thumbtack text-green-500" title="Pinned"></i>}
                     <button className="ml-2 text-blue-500">
                         {isVisible ? '[ - ]' : '[ + ]'}
                     </button>
-                    <span className="ml-1">by {comment.author}</span>
+                    <span className="ml-1">by {comment.author} {comment.isOP && <span className="text-green-500 ml-1">[OP]</span>}</span>
                     <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
                 </div>
                 {isVisible && (
