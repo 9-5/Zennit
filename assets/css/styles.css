@@ -5,9 +5,9 @@ body {
     white-space: normal;
 }
 .title-container {
-    max-width: 70%; /* Adjust as needed */
-    overflow-wrap: break-word; /* Allows long words to break */
-    white-space: normal; /* Allows text to wrap */
+    max-width: 70%; 
+    overflow-wrap: break-word; 
+    white-space: normal; 
 }
 .comment-body {
     max-width: 100%;
@@ -69,6 +69,58 @@ body {
 
 .toggle-switch.on {
     background-color: #4caf50;
+}
+.search-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #2d2d2d; 
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    z-index: 1000;
+    width: 400px;
+    color: white; 
+}
+
+.search-popup button {
+    margin-top: 10px;
+    background-color: #4a4a4a; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    padding: 10px; 
+    cursor: pointer; 
+}
+
+.search-popup button:hover {
+    background-color: #5a5a5a; 
+}
+
+.search-popup select,
+.search-popup input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #555; 
+    border-radius: 4px;
+    background-color: #3a3a3a; 
+    color: white; 
+}
+
+.search-popup input::placeholder {
+    color: #aaa; 
+}
+
+.search-popup select {
+    background-color: #3a3a3a; 
+    color: white; 
+}
+
+.search-popup select option {
+    background-color: #3a3a3a; 
+    color: white; 
 }
 ::-webkit-scrollbar {
     display: none;

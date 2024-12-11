@@ -47,7 +47,7 @@ const App = () => {
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
-
+    const [enableSearch, setEnableSearch] = useState(() => JSON.parse(localStorage.getItem('enableSearch')) || false);
     
 
     // Main functions.
@@ -337,6 +337,8 @@ const App = () => {
     };
 
     const renderPageHeader = () => {
+        const [showSearchPopup, setShowSearchPopup] = useState(false);
+
         return (
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); }}>
@@ -358,6 +360,11 @@ const App = () => {
                         <option value="top">Top</option>
                         <option value="rising">Rising</option>
                     </select>
+                    {enableSearch && (
+                        <button className="text-white ml-4" onClick={() => setShowSearchPopup(true)}>
+                            <i className="fas fa-search"></i>
+                        </button>
+                    )}
                     <button className="text-white ml-4" onClick={fetchPosts}>
                         <i className="fas fa-sync-alt active"></i>
                     </button>
@@ -365,8 +372,137 @@ const App = () => {
                         <i className="fas fa-cog active" id="settingsIcon"></i>
                     </button>
                 </div>
+                {showSearchPopup && <SearchPopup onClose={() => setShowSearchPopup(false)} />}
             </div>
         )
+    };
+
+    const SearchPopup = ({ onClose }) => {
+        const [searchTerm, setSearchTerm] = useState('');
+        const [searchType, setSearchType] = useState('subreddit');
+        const [results, setResults] = useState([]);
+        const [after, setAfter] = useState(null);
+        const [loading, setLoading] = useState(false);
+    
+        const handleSearch = () => {
+            setLoading(true);
+            let fetchUrl;
+
+            if (after === null) {
+                setResults([]);
+            }
+
+            switch (searchType) {
+                case 'subreddit':
+                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}`;
+                    break;
+                case 'user':
+                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}`;
+                    break;
+                case 'post':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot`;
+                    break;
+                case 'comment':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot`;
+                    break;
+                default:
+                    break;
+            }
+    
+            fetch(fetchUrl)
+                .then(response => response.json())
+                .then(data => {
+                    setResults(data.data.children);
+                    setAfter(data.data.after);
+                })
+                .catch(error => console.error('Search fetch error:', error))
+                .finally(() => setLoading(false));
+        };
+    
+        const handlePagination = () => {
+            if (!after) return;
+
+            setLoading(true);
+            let fetchUrl;
+
+            switch (searchType) {
+                case 'subreddit':
+                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}&after=${after}`;
+                    break;
+                case 'user':
+                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}&after=${after}`;
+                    break;
+                case 'post':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                    break;
+                case 'comment':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                    break;
+                default:
+                    break;
+            }
+            fetch(fetchUrl)
+                .then(response => response.json())
+                .then(data => {
+                    setResults(prevResults => [...prevResults, ...data.data.children]);
+                    setAfter(data.data.after);
+                })
+                .catch(error => console.error('Pagination fetch error:', error))
+                .finally(() => setLoading(false));
+        };
+    
+        return (
+            <div className="search-popup">
+                <button onClick={onClose}>Close</button>
+                <select onChange={(e) => setSearchType(e.target.value)} value={searchType}>
+                    <option value="subreddit">Subreddit</option>
+                    <option value="user">User </option>
+                    <option value="post">Post</option>
+                    <option value="comment">Comment</option>
+                </select>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={`Search ${searchType}`}
+                />
+                <button onClick={handleSearch}>Search</button>
+    
+                {loading && <p>Loading...</p>}
+                <div>
+                    {results.map((result, index) => (
+                        <div key={index}>
+                            {searchType === 'subreddit' && (
+                                <div>
+                                    <h3>{result.data.display_name}</h3>
+                                    <p>{result.data.public_description}</p>
+                                </div>
+                            )}
+                            {searchType === 'user' && (
+                                <div>
+                                    <h3>{result.data.name}</h3>
+                                    <p>Karma: {result.data.link_karma + result.data.comment_karma}</p>
+                                </div>
+                            )}
+                            {searchType === 'post' && (
+                                <div>
+                                    <h3>{result.data.title}</h3>
+                                    <p>{result.data.selftext}</p>
+                                </div>
+                            )}
+                            {searchType === 'comment' && (
+                                <div>
+                                    <h3>{result.data.body}</h3>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {after && (
+                        <button onClick={handlePagination}>Load More</button>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     const renderLoadingSpinner = () => {
@@ -1276,6 +1412,20 @@ const App = () => {
                             </div>
                         </div>
                     </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}><i class="fas fa-flask mr-2"></i>Enable Search</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={enableSearch} 
+                                onChange={() => setEnableSearch(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${enableSearch ? 'on' : 'off'}`} onClick={() => setEnableSearch(prev => !prev)}>
+                                <div className={`toggle-thumb ${enableSearch ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <button className="mt-4 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>
                     Close
@@ -1568,7 +1718,7 @@ const App = () => {
                             ) : (
                                 <>
                                     {renderTabSlider()}
-                                    {activeUserTab === 'posts' ? renderPostFeed() : renderUserComments()} {/* Conditional rendering */}
+                                    {activeUserTab === 'posts' ? renderPostFeed() : renderUserComments()}
                                 </>
                             )}
                         </>
