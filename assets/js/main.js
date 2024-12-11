@@ -53,6 +53,8 @@ const App = () => {
     // Main functions.
     const fetchPosts = (page) => {
         setLoadingPosts(true);
+        setPosts([]);
+        setAfter(null);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
           const username = selectedSubreddit.substring(2);
@@ -145,6 +147,7 @@ const App = () => {
     
     const fetchComments = (postId) => {
         setLoadingComments(true);
+        setUserAfterComment(null);
         setComments([]);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         const subredditToUse = post.subreddit;
@@ -230,6 +233,7 @@ const App = () => {
 
     const fetchUserComments = () => {
         setLoadingComments(true);
+        setUserAfterComment(null);
         setComments([]);
         fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json`)
             .then(response => {
