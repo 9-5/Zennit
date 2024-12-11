@@ -4,7 +4,10 @@ const { createRoot } = ReactDOM;
 const App = () => {
     const [contentBlockerDetected, setContentBlockerDetected] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(false);
+    const [after, setAfter] = useState(null);
     const [loadingComments, setLoadingComments] = useState(false);
+    const [afterComment, setAfterComment] = useState(null);
+    const [userAfterComment, setUserAfterComment] = useState(null);
     const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
     const [posts, setPosts] = useState([]);
@@ -50,7 +53,6 @@ const App = () => {
     // Main functions.
     const fetchPosts = (page) => {
         setLoadingPosts(true);
-        setPosts([]);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
           const username = selectedSubreddit.substring(2);
@@ -60,8 +62,8 @@ const App = () => {
         }
       
         fetch(fetchUrl)
-          .then(response => response.json())
-          .then(data => {
+            .then(response => response.json())
+            .then(data => {
             const fetchedPosts = data.data.children.map(child => {
                 const isEdited = child.data.edited;
                 return {
@@ -83,18 +85,64 @@ const App = () => {
                     locked: child.data.locked
                 };
             });
-      
-            setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
             setContentBlockerDetected(false);
-          })
-          .catch(error => {
+            setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
+            setAfter(data.data.after); 
+            })
+            .catch(error => {
             console.error('Post fetch error:', error);
             setContentBlockerDetected(true);
-          })
-          .finally(() => {
+            })
+            .finally(() => {
             setLoadingPosts(false);
-          });
-      }
+            });
+        }
+
+    const fetchMorePosts = () => {
+        if (!after) return;
+        setLoadingPosts(true);
+        let fetchUrl;
+        if (selectedSubreddit.startsWith('u/')) {
+          const username = selectedSubreddit.substring(2);
+          fetchUrl = `https://www.reddit.com/user/${username}/submitted/${sort}.json?limit=25&after=${after}`;
+        } else {
+            fetchUrl = `https://www.reddit.com/${selectedSubreddit}/${sort}.json?limit=25&after=${after}`;
+        }
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                const fetchedPosts = data.data.children.map(child => {
+                    const isEdited = child.data.edited;
+                    return {
+                        id: child.data.id,
+                        title: child.data.title,
+                        author: child.data.author,
+                        content: child.data.selftext,
+                        url: child.data.url,
+                        subreddit: child.data.subreddit_name_prefixed,
+                        created_utc: child.data.created_utc,
+                        gallery_data: child.data.gallery_data,
+                        media_metadata: child.data.media_metadata,
+                        pinned: child.data.stickied,
+                        ups: child.data.ups - child.data.downs,
+                        media: child.data.media,
+                        flair: child.data.link_flair_text || '',
+                        nsfw: child.data.over_18,
+                        isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
+                        locked: child.data.locked
+                    };
+                });
+                setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
+                setAfter(data.data.after);
+            })
+            .catch(error => {
+                console.error('Post fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingPosts(false);
+            });
+        };
+    
     const fetchComments = (postId) => {
         setLoadingComments(true);
         setComments([]);
@@ -138,8 +186,39 @@ const App = () => {
                     return { ...commentData, isVisible: true, isOP, isEdited };
                 });
     
-                setComments(fetchedComments);
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
                 setCommentVisibility(new Array(fetchedComments.length).fill(true));
+            })
+            .catch(error => {
+                console.error('Comment fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
+            });
+    };
+    
+    const fetchMoreComments = () => {
+        if (!afterComment) return;
+        setLoadingComments(true);
+        fetch(`https://www.reddit.com/${selectedSubreddit}/comments/${selectedPostId}.json?sort=${commentSort}&limit=25&after=${afterComment}`)
+            .then(response => response.json())
+            .then(data => {
+                const fetchedComments = data[1].data.children.map(child => ({
+                    author: child.data.author,
+                    body: child.data.body,
+                    media_metadata: child.data.media_metadata,
+                    pinned: child.data.stickied,
+                    ups: child.data.ups - child.data.downs,
+                    replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
+                        author: reply.data.author,
+                        body: reply.data.body,
+                        media_metadata: reply.data.media_metadata,
+                        pinned: reply.data.stickied,
+                        ups: reply.data.ups - reply.data.downs
+                    })) : []
+                }));
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setAfterComment(data[1].data.after);
             })
             .catch(error => {
                 console.error('Comment fetch error:', error);
@@ -171,10 +250,44 @@ const App = () => {
                     link_title: child.data.link_title,
                     subreddit: child.data.subreddit
                 }));
-                setComments(fetchedComments);
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setUserAfterComment(data.data.after);
             })
             .catch(error => {
                 console.error('Comment fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
+            });
+    };
+
+    const fetchMoreUserComments = () => {
+        if (!userAfterComment) return; // Check if there's a next page
+        setLoadingComments(true);
+        fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json?limit=25&after=${userAfterComment}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const fetchedComments = data.data.children.map(child => ({
+                    id: child.data.id,
+                    body: child.data.body,
+                    author: child.data.author,
+                    ups: child.data.ups - child.data.downs,
+                    post_id: child.data.link_id,
+                    created_utc: child.data.created_utc,
+                    permalink: child.data.permalink,
+                    link_title: child.data.link_title,
+                    subreddit: child.data.subreddit
+                }));
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setUserAfterComment(data.data.after); // Update the after state for pagination
+            })
+            .catch(error => {
+                console.error('User  comment fetch error:', error);
             })
             .finally(() => {
                 setLoadingComments(false);
@@ -261,8 +374,8 @@ const App = () => {
     };
 
     const renderPostFeed = () => {
-        return (
-            posts
+        return (<>
+            {posts
                 .filter(post => showNSFWPosts || !post.nsfw)
                 .map((post, index) => (
                     <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
@@ -290,7 +403,15 @@ const App = () => {
                         </div>
                     </div>
                 )
-            )
+            )}
+            {after && (
+                <div className="text-center mt-4">
+                    <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMorePosts}>
+                        Load More Posts
+                    </button>
+                </div>
+            )}
+        </>
         );
     };
 
@@ -709,7 +830,6 @@ const App = () => {
                     const parsedUrl = new URL(url);
                     return parsedUrl.hostname;
                 } catch (error) {
-                    console.error('Invalid URL:', error);
                     return '';
                 }
             };
@@ -725,7 +845,7 @@ const App = () => {
                         setPostTitle(titleMatch[1]);
                     }
                 } catch (error) {
-                    console.error(':(')
+                    return;
                 }
             };
 
@@ -860,15 +980,15 @@ const App = () => {
                 title: 'Check out this post on Reddit',
                 url: url
             }).then(() => {
-                console.log('Post shared successfully');
+                setToastMessage('Post shared!');
             }).catch((error) => {
-                console.error('Error sharing the post:', error);
+                return;
             });
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 setToastMessage('Post link copied to clipboard!');
             }).catch((error) => {
-                console.error('Could not copy text: ', error);
+                return;
             });
         }
     };
@@ -898,68 +1018,88 @@ const App = () => {
         }
 
         return (
-            <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
-                    <button className="ml-2 text-blue-500">
-                        {isVisible ? '[ - ]' : '[ + ]'}
-                    </button>
-                    <span className="ml-1">by {comment.author}</span>
-                    <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
-                    {disableCommentTags ? (<div className="comment-tags-disabled"></div>
-                    ) : (
-                        <span className="comment-tags-container flex items-center ">
-                            {comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="Original Poster"></i>}
-                            {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400 ml-2" title={comment.isEdited}></i>}
-                            {comment.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
-                            {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
-                        </span>
+            <>
+                {<div className="text-white bg-gray-700 p-2 rounded mt-1">
+                    <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
+                        <button className="ml-2 text-blue-500">
+                            {isVisible ? '[ - ]' : '[ + ]'}
+                        </button>
+                        <span className="ml-1">by {comment.author}</span>
+                        <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
+                        {disableCommentTags ? (<div className="comment-tags-disabled"></div>
+                        ) : (
+                            <span className="comment-tags-container flex items-center ">
+                                {comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="Original Poster"></i>}
+                                {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400 ml-2" title={comment.isEdited}></i>}
+                                {comment.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
+                                {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
+                            </span>
+                        )}
+                    </div>
+                    {isVisible && (
+                        <div className="comment-body">
+                            <div className="ml-2">{renderFormattedText(comment.body)}</div>
+                            {disableCommentReplies ? (
+                            <div className="comment-replies-disabled"></div>
+                            ) : (
+                                comment.replies && comment.replies.length > 0 && (
+                                    <div className="ml-4">
+                                        {comment.replies.map((reply, index) => (
+                                            <Comment key={index} comment={reply} />
+                                        ))}
+                                    </div>
+                                )
+                            )
+                        }
+                        </div>
                     )}
                 </div>
-                {isVisible && (
-                    <div className="comment-body">
-                        <div className="ml-2">{renderFormattedText(comment.body)}</div>
-                        {disableCommentReplies ? (
-                        <div className="comment-replies-disabled"></div>
-                        ) : (
-                            comment.replies && comment.replies.length > 0 && (
-                                <div className="ml-4">
-                                    {comment.replies.map((reply, index) => (
-                                        <Comment key={index} comment={reply} />
-                                    ))}
-                                </div>
-                            )
-                        )
-                    }
+                }
+                {afterComment && (
+                    <div className="text-center mt-4">
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMoreComments}>
+                            Load More Comments
+                        </button>
                     </div>
-                )}
-            </div>
+                    )
+                }
+            </>
         );
     };
 
     const renderUserComments = () => {
         return (
-            comments.map((comment, index) => (
-                <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
-                    <div className="flex justify-between items-center">
-                        <div className="flex-1 overflow-hidden text-left">
-                            <span className="text-white whitespace-normal">
-                                {comment.link_title.replace(/&amp;/g, '&')}
-                            </span>
+            <>
+                {comments.map((comment, index) => (
+                    <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                        <div className="flex justify-between items-center">
+                            <div className="flex-1 overflow-hidden text-left">
+                                <span className="text-white whitespace-normal">
+                                    {comment.link_title.replace(/&amp;/g, '&')}
+                                </span>
+                            </div>
+                            <div className="text-gray-400 ml-4 flex-shrink-0">
+                                <span className="flex items-center">
+                                    <i className="fas fa-arrow-up mr-1"></i>
+                                    {formatUpvotes(comment.ups)}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-gray-400 ml-4 flex-shrink-0">
-                            <span className="flex items-center">
-                                <i className="fas fa-arrow-up mr-1"></i>
-                                {formatUpvotes(comment.ups)}
-                            </span>
+                        <div className="text-gray-400 ml-2 italic">{renderFormattedText(comment.body)}</div>
+                        <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                            <span>by {comment.author}</span>
+                            <span>{formatDate(comment.created_utc)}</span>
                         </div>
                     </div>
-                    <div className="text-gray-400 ml-2 italic">{renderFormattedText(comment.body)}</div>
-                    <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                        <span>by {comment.author}</span>
-                        <span>{formatDate(comment.created_utc)}</span>
+                ))}
+                {userAfterComment && (
+                    <div className="text-center mt-4">
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMoreUserComments}>
+                            Load More Comments
+                        </button>
                     </div>
-                </div>
-            ))
+                )}
+            </>
         );
     };
     
