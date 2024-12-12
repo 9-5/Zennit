@@ -64,39 +64,6 @@ const App = () => {
         }
       
         fetch(fetchUrl)
-<<<<<<< HEAD
-          .then(response => response.json())
-          .then(data => {
-            const fetchedPosts = data.data.children.map(child => ({
-              id: child.data.id,
-              title: child.data.title,
-              author: child.data.author,
-              content: child.data.selftext,
-              url: child.data.url,
-              subreddit: child.data.subreddit_name_prefixed,
-              created_utc: child.data.created_utc,
-              gallery_data: child.data.gallery_data,
-              media_metadata: child.data.media_metadata,
-              pinned: child.data.stickied,
-              ups: child.data.ups - child.data.downs,
-              media: child.data.media,
-              flair: child.data.link_flair_text || '',
-              nsfw: child.data.over_18,
-              isEdited: child.data.edited
-            }));
-      
-            setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
-            setContentBlockerDetected(false);
-          })
-          .catch(error => {
-            console.error('Post fetch error:', error);
-            setContentBlockerDetected(true);
-          })
-          .finally(() => {
-            setLoadingPosts(false);
-          });
-      }
-=======
             .then(response => response.json())
             .then(data => {
             const fetchedPosts = data.data.children.map(child => {
@@ -178,7 +145,6 @@ const App = () => {
             });
         };
     
->>>>>>> 9baab3e5f5e437b28d06f03f90f5693bfc7ced35
     const fetchComments = (postId) => {
         setLoadingComments(true);
         setUserAfterComment(null);
@@ -857,12 +823,7 @@ const App = () => {
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
                             <span className="flex items-center">
-<<<<<<< HEAD
-                                {console.log(selectedPost.isEdited)}
-                                <i className="fas fa-arrow-up mr-1"></i>
-=======
                                 <i className="fas fa-arrow-up ml-2"></i>
->>>>>>> 9baab3e5f5e437b28d06f03f90f5693bfc7ced35
                                 {formatUpvotes(selectedPost.ups)}
                                 {selectedPost.isEdited && (<i className="fas fa-pencil-alt text-gray-400 ml-2" title={selectedPost.isEdited}></i>)}
                                 {selectedPost.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
