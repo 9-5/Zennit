@@ -4,7 +4,10 @@ const { createRoot } = ReactDOM;
 const App = () => {
     const [contentBlockerDetected, setContentBlockerDetected] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(false);
+    const [after, setAfter] = useState(null);
     const [loadingComments, setLoadingComments] = useState(false);
+    const [afterComment, setAfterComment] = useState(null);
+    const [userAfterComment, setUserAfterComment] = useState(null);
     const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
     const [posts, setPosts] = useState([]);
@@ -34,20 +37,24 @@ const App = () => {
     const themes = [{ name: 'Ocean', className: '' }, { name: 'Sky', className: 'sky' }, { name: 'Forest', className: 'forest' }, { name: 'Bamboo', className: 'bamboo' }, { name: 'Crimson', className: 'crimson' }, { name: 'Blush', className: 'blush' }, { name: 'Petal', className: 'petal' }, { name: 'Lotus', className: 'lotus' }, { name: 'Amethyst', className: 'amethyst' }];
     const [currentTheme, setCurrentTheme] = useState(() => {return localStorage.getItem('theme') || 'Ocean';});
     const [showNSFWPosts, setShowNSFWPosts] = useState(() => JSON.parse(localStorage.getItem('showNSFWPosts')) || false);
+    const [disablePostFlairs, setDisablePostFlairs] = useState(() => JSON.parse(localStorage.getItem('disablePostFlairs')) || false);
     const [disableComments, setDisableComments] = useState(() => JSON.parse(localStorage.getItem('disableComments')) || false);
     const [disableCommentReplies, setDisableCommentReplies] = useState(() => JSON.parse(localStorage.getItem('disableCommentReplies')) || false);
+    const [disableCommentTags, setDisableCommentTags] = useState(() => JSON.parse(localStorage.getItem('disableCommentReplies')) || false);
     const [viewingAbout, setViewingAbout] = useState(false);
     const [commitInfo, setCommitInfo] = useState(null);
     const [showClearCachePopup, setShowClearCachePopup] = useState(false);
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
-
+    const [enableSearch, setEnableSearch] = useState(() => JSON.parse(localStorage.getItem('enableSearch')) || false);
     
 
     // Main functions.
     const fetchPosts = (page) => {
         setLoadingPosts(true);
+        setPosts([]);
+        setAfter(null);
         let fetchUrl;
         if (selectedSubreddit.startsWith('u/')) {
           const username = selectedSubreddit.substring(2);
@@ -57,6 +64,7 @@ const App = () => {
         }
       
         fetch(fetchUrl)
+<<<<<<< HEAD
           .then(response => response.json())
           .then(data => {
             const fetchedPosts = data.data.children.map(child => ({
@@ -88,8 +96,93 @@ const App = () => {
             setLoadingPosts(false);
           });
       }
+=======
+            .then(response => response.json())
+            .then(data => {
+            const fetchedPosts = data.data.children.map(child => {
+                const isEdited = child.data.edited;
+                return {
+                    id: child.data.id,
+                    title: child.data.title,
+                    author: child.data.author,
+                    content: child.data.selftext,
+                    url: child.data.url,
+                    subreddit: child.data.subreddit_name_prefixed,
+                    created_utc: child.data.created_utc,
+                    gallery_data: child.data.gallery_data,
+                    media_metadata: child.data.media_metadata,
+                    pinned: child.data.stickied,
+                    ups: child.data.ups - child.data.downs,
+                    media: child.data.media,
+                    flair: child.data.link_flair_text || '',
+                    nsfw: child.data.over_18,
+                    isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
+                    locked: child.data.locked
+                };
+            });
+            setContentBlockerDetected(false);
+            setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
+            setAfter(data.data.after); 
+            })
+            .catch(error => {
+            console.error('Post fetch error:', error);
+            setContentBlockerDetected(true);
+            })
+            .finally(() => {
+            setLoadingPosts(false);
+            });
+        }
+
+    const fetchMorePosts = () => {
+        if (!after) return;
+        setLoadingPosts(true);
+        let fetchUrl;
+        if (selectedSubreddit.startsWith('u/')) {
+          const username = selectedSubreddit.substring(2);
+          fetchUrl = `https://www.reddit.com/user/${username}/submitted/${sort}.json?limit=25&after=${after}`;
+        } else {
+            fetchUrl = `https://www.reddit.com/${selectedSubreddit}/${sort}.json?limit=25&after=${after}`;
+        }
+        fetch(fetchUrl)
+            .then(response => response.json())
+            .then(data => {
+                const fetchedPosts = data.data.children.map(child => {
+                    const isEdited = child.data.edited;
+                    return {
+                        id: child.data.id,
+                        title: child.data.title,
+                        author: child.data.author,
+                        content: child.data.selftext,
+                        url: child.data.url,
+                        subreddit: child.data.subreddit_name_prefixed,
+                        created_utc: child.data.created_utc,
+                        gallery_data: child.data.gallery_data,
+                        media_metadata: child.data.media_metadata,
+                        pinned: child.data.stickied,
+                        ups: child.data.ups - child.data.downs,
+                        media: child.data.media,
+                        flair: child.data.link_flair_text || '',
+                        nsfw: child.data.over_18,
+                        isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
+                        locked: child.data.locked
+                    };
+                });
+                setPosts(prevPosts => [...prevPosts, ...fetchedPosts]);
+                setAfter(data.data.after);
+            })
+            .catch(error => {
+                console.error('Post fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingPosts(false);
+            });
+        };
+    
+>>>>>>> 9baab3e5f5e437b28d06f03f90f5693bfc7ced35
     const fetchComments = (postId) => {
         setLoadingComments(true);
+        setUserAfterComment(null);
+        setComments([]);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
         const subredditToUse = post.subreddit;
         fetch(`https://www.reddit.com/${subredditToUse}/comments/${postId}.json?sort=${commentSort}`)
@@ -109,13 +202,16 @@ const App = () => {
                         body: child.data.body,
                         media_metadata: child.data.media_metadata,
                         pinned: child.data.stickied,
+                        isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
                         ups: child.data.ups - child.data.downs,
+                        locked: child.data.locked,
                         replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                             author: reply.data.author,
                             body: reply.data.body,
                             media_metadata: reply.data.media_metadata,
                             pinned: reply.data.stickied,
                             ups: reply.data.ups - reply.data.downs,
+                            isEdited: (typeof reply.data.edited === 'number') ? formatDate(reply.data.edited) : false
                         })) : []
                     };
                     if (commentData.media_metadata && commentData.media_metadata.length > 0) {
@@ -127,8 +223,39 @@ const App = () => {
                     return { ...commentData, isVisible: true, isOP, isEdited };
                 });
     
-                setComments(fetchedComments);
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
                 setCommentVisibility(new Array(fetchedComments.length).fill(true));
+            })
+            .catch(error => {
+                console.error('Comment fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
+            });
+    };
+    
+    const fetchMoreComments = () => {
+        if (!afterComment) return;
+        setLoadingComments(true);
+        fetch(`https://www.reddit.com/${selectedSubreddit}/comments/${selectedPostId}.json?sort=${commentSort}&limit=25&after=${afterComment}`)
+            .then(response => response.json())
+            .then(data => {
+                const fetchedComments = data[1].data.children.map(child => ({
+                    author: child.data.author,
+                    body: child.data.body,
+                    media_metadata: child.data.media_metadata,
+                    pinned: child.data.stickied,
+                    ups: child.data.ups - child.data.downs,
+                    replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
+                        author: reply.data.author,
+                        body: reply.data.body,
+                        media_metadata: reply.data.media_metadata,
+                        pinned: reply.data.stickied,
+                        ups: reply.data.ups - reply.data.downs
+                    })) : []
+                }));
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setAfterComment(data[1].data.after);
             })
             .catch(error => {
                 console.error('Comment fetch error:', error);
@@ -140,6 +267,8 @@ const App = () => {
 
     const fetchUserComments = () => {
         setLoadingComments(true);
+        setUserAfterComment(null);
+        setComments([]);
         fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json`)
             .then(response => {
                 if (!response.ok) {
@@ -159,10 +288,44 @@ const App = () => {
                     link_title: child.data.link_title,
                     subreddit: child.data.subreddit
                 }));
-                setComments(fetchedComments);
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setUserAfterComment(data.data.after);
             })
             .catch(error => {
                 console.error('Comment fetch error:', error);
+            })
+            .finally(() => {
+                setLoadingComments(false);
+            });
+    };
+
+    const fetchMoreUserComments = () => {
+        if (!userAfterComment) return; // Check if there's a next page
+        setLoadingComments(true);
+        fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json?limit=25&after=${userAfterComment}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const fetchedComments = data.data.children.map(child => ({
+                    id: child.data.id,
+                    body: child.data.body,
+                    author: child.data.author,
+                    ups: child.data.ups - child.data.downs,
+                    post_id: child.data.link_id,
+                    created_utc: child.data.created_utc,
+                    permalink: child.data.permalink,
+                    link_title: child.data.link_title,
+                    subreddit: child.data.subreddit
+                }));
+                setComments(prevComments => [...prevComments, ...fetchedComments]);
+                setUserAfterComment(data.data.after); // Update the after state for pagination
+            })
+            .catch(error => {
+                console.error('User  comment fetch error:', error);
             })
             .finally(() => {
                 setLoadingComments(false);
@@ -208,6 +371,8 @@ const App = () => {
     };
 
     const renderPageHeader = () => {
+        const [showSearchPopup, setShowSearchPopup] = useState(false);
+
         return (
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); }}>
@@ -229,6 +394,11 @@ const App = () => {
                         <option value="top">Top</option>
                         <option value="rising">Rising</option>
                     </select>
+                    {enableSearch && (
+                        <button className="text-white ml-4" onClick={() => setShowSearchPopup(true)}>
+                            <i className="fas fa-search"></i>
+                        </button>
+                    )}
                     <button className="text-white ml-4" onClick={fetchPosts}>
                         <i className="fas fa-sync-alt active"></i>
                     </button>
@@ -236,8 +406,137 @@ const App = () => {
                         <i className="fas fa-cog active" id="settingsIcon"></i>
                     </button>
                 </div>
+                {showSearchPopup && <SearchPopup onClose={() => setShowSearchPopup(false)} />}
             </div>
         )
+    };
+
+    const SearchPopup = ({ onClose }) => {
+        const [searchTerm, setSearchTerm] = useState('');
+        const [searchType, setSearchType] = useState('subreddit');
+        const [results, setResults] = useState([]);
+        const [after, setAfter] = useState(null);
+        const [loading, setLoading] = useState(false);
+    
+        const handleSearch = () => {
+            setLoading(true);
+            let fetchUrl;
+
+            if (after === null) {
+                setResults([]);
+            }
+
+            switch (searchType) {
+                case 'subreddit':
+                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}`;
+                    break;
+                case 'user':
+                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}`;
+                    break;
+                case 'post':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot`;
+                    break;
+                case 'comment':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot`;
+                    break;
+                default:
+                    break;
+            }
+    
+            fetch(fetchUrl)
+                .then(response => response.json())
+                .then(data => {
+                    setResults(data.data.children);
+                    setAfter(data.data.after);
+                })
+                .catch(error => console.error('Search fetch error:', error))
+                .finally(() => setLoading(false));
+        };
+    
+        const handlePagination = () => {
+            if (!after) return;
+
+            setLoading(true);
+            let fetchUrl;
+
+            switch (searchType) {
+                case 'subreddit':
+                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}&after=${after}`;
+                    break;
+                case 'user':
+                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}&after=${after}`;
+                    break;
+                case 'post':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                    break;
+                case 'comment':
+                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                    break;
+                default:
+                    break;
+            }
+            fetch(fetchUrl)
+                .then(response => response.json())
+                .then(data => {
+                    setResults(prevResults => [...prevResults, ...data.data.children]);
+                    setAfter(data.data.after);
+                })
+                .catch(error => console.error('Pagination fetch error:', error))
+                .finally(() => setLoading(false));
+        };
+    
+        return (
+            <div className="search-popup">
+                <button onClick={onClose}>Close</button>
+                <select onChange={(e) => setSearchType(e.target.value)} value={searchType}>
+                    <option value="subreddit">Subreddit</option>
+                    <option value="user">User </option>
+                    <option value="post">Post</option>
+                    <option value="comment">Comment</option>
+                </select>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={`Search ${searchType}`}
+                />
+                <button onClick={handleSearch}>Search</button>
+    
+                {loading && <p>Loading...</p>}
+                <div>
+                    {results.map((result, index) => (
+                        <div key={index}>
+                            {searchType === 'subreddit' && (
+                                <div>
+                                    <h3>{result.data.display_name}</h3>
+                                    <p>{result.data.public_description}</p>
+                                </div>
+                            )}
+                            {searchType === 'user' && (
+                                <div>
+                                    <h3>{result.data.name}</h3>
+                                    <p>Karma: {result.data.link_karma + result.data.comment_karma}</p>
+                                </div>
+                            )}
+                            {searchType === 'post' && (
+                                <div>
+                                    <h3>{result.data.title}</h3>
+                                    <p>{result.data.selftext}</p>
+                                </div>
+                            )}
+                            {searchType === 'comment' && (
+                                <div>
+                                    <h3>{result.data.body}</h3>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {after && (
+                        <button onClick={handlePagination}>Load More</button>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     const renderLoadingSpinner = () => {
@@ -249,8 +548,8 @@ const App = () => {
     };
 
     const renderPostFeed = () => {
-        return (
-            posts
+        return (<>
+            {posts
                 .filter(post => showNSFWPosts || !post.nsfw)
                 .map((post, index) => (
                     <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
@@ -262,7 +561,7 @@ const App = () => {
                                 <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
                             </div>
                             <div className="text-gray-400 ml-4 flex-shrink-0">
-                            {post.flair && <span className="flair">{post.flair}</span>}
+                            {!disablePostFlairs && (post.flair && <span className="flair"><strong>{post.flair}</strong></span>)}
                                 <span className="flex items-center">
                                     <i className="fas fa-arrow-up mr-1"></i>
                                     {formatUpvotes(post.ups)}
@@ -278,7 +577,15 @@ const App = () => {
                         </div>
                     </div>
                 )
-            )
+            )}
+            {after && (
+                <div className="text-center mt-4">
+                    <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMorePosts}>
+                        Load More Posts
+                    </button>
+                </div>
+            )}
+        </>
         );
     };
 
@@ -550,9 +857,15 @@ const App = () => {
                         </div>
                         <div className="text-gray-400 ml-4 flex-shrink-0">
                             <span className="flex items-center">
+<<<<<<< HEAD
                                 {console.log(selectedPost.isEdited)}
                                 <i className="fas fa-arrow-up mr-1"></i>
+=======
+                                <i className="fas fa-arrow-up ml-2"></i>
+>>>>>>> 9baab3e5f5e437b28d06f03f90f5693bfc7ced35
                                 {formatUpvotes(selectedPost.ups)}
+                                {selectedPost.isEdited && (<i className="fas fa-pencil-alt text-gray-400 ml-2" title={selectedPost.isEdited}></i>)}
+                                {selectedPost.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
                             </span>
                         </div>
                     </div>
@@ -560,11 +873,11 @@ const App = () => {
                         <span>by {selectedPost.author}</span>
                         <span>{formatDate(selectedPost.created_utc)}</span>
                     </div>
+                    {!disablePostFlairs && (selectedPost.flair && <span className="flair"><strong>{selectedPost.flair}</strong></span>)}
                 </div>
                 <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                        {renderFormattedText(selectedPost.content)}
-                        {renderPostContent(selectedPost)}
-                
+                    {renderFormattedText(selectedPost.content)}
+                    {renderPostContent(selectedPost)}
                     <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
                         <i className="fas fa-share-alt"></i>  Share Post
                     </button>
@@ -696,7 +1009,6 @@ const App = () => {
                     const parsedUrl = new URL(url);
                     return parsedUrl.hostname;
                 } catch (error) {
-                    console.error('Invalid URL:', error);
                     return '';
                 }
             };
@@ -712,7 +1024,7 @@ const App = () => {
                         setPostTitle(titleMatch[1]);
                     }
                 } catch (error) {
-                    console.error(':(')
+                    return;
                 }
             };
 
@@ -847,15 +1159,15 @@ const App = () => {
                 title: 'Check out this post on Reddit',
                 url: url
             }).then(() => {
-                console.log('Post shared successfully');
+                setToastMessage('Post shared!');
             }).catch((error) => {
-                console.error('Error sharing the post:', error);
+                return;
             });
         } else {
             navigator.clipboard.writeText(url).then(() => {
                 setToastMessage('Post link copied to clipboard!');
             }).catch((error) => {
-                console.error('Could not copy text: ', error);
+                return;
             });
         }
     };
@@ -885,65 +1197,91 @@ const App = () => {
         }
 
         return (
-            <div className="text-white bg-gray-700 p-2 rounded mt-1">
-                <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
-                    <button className="ml-2 text-blue-500">
-                        {isVisible ? '[ - ]' : '[ + ]'}
-                    </button>
-                    <span className="ml-1">by {comment.author}{comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="OP"></i>}
-                    </span>
-                    <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
-                    {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
-                    {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400" title="Edited"></i>}
-                </div>
-                {isVisible && (
-                    <div className="comment-body">
-                        <div className="ml-2">{renderFormattedText(comment.body)}</div>
-                        {disableCommentReplies ? (
-                        <div className="comment-replies-disabled"></div>
+            <>
+                {<div className="text-white bg-gray-700 p-2 rounded mt-1">
+                    <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
+                        <button className="ml-2 text-blue-500">
+                            {isVisible ? '[ - ]' : '[ + ]'}
+                        </button>
+                        <span className="ml-1">by {comment.author}</span>
+                        <span className="text-gray-400 ml-2"><i className="fas fa-arrow-up"></i>{formatUpvotes(comment.ups)}</span>
+                        {disableCommentTags ? (<div className="comment-tags-disabled"></div>
                         ) : (
-                            comment.replies && comment.replies.length > 0 && (
-                                <div className="ml-4">
-                                    {comment.replies.map((reply, index) => (
-                                        <Comment key={index} comment={reply} />
-                                    ))}
-                                </div>
-                            )
-                        )
-                    }
+                            <span className="comment-tags-container flex items-center ">
+                                {comment.isOP && <i className="fas fa-at text-blue-500 ml-2" title="Original Poster"></i>}
+                                {comment.isEdited && <i className="fas fa-pencil-alt text-gray-400 ml-2" title={comment.isEdited}></i>}
+                                {comment.locked && (<i className="fas fa-lock text-gray-400 ml-2" title="Locked"></i>)}
+                                {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
+                            </span>
+                        )}
                     </div>
-                )}
-            </div>
+                    {isVisible && (
+                        <div className="comment-body">
+                            <div className="ml-2">{renderFormattedText(comment.body)}</div>
+                            {disableCommentReplies ? (
+                            <div className="comment-replies-disabled"></div>
+                            ) : (
+                                comment.replies && comment.replies.length > 0 && (
+                                    <div className="ml-4">
+                                        {comment.replies.map((reply, index) => (
+                                            <Comment key={index} comment={reply} />
+                                        ))}
+                                    </div>
+                                )
+                            )
+                        }
+                        </div>
+                    )}
+                </div>
+                }
+                {afterComment && (
+                    <div className="text-center mt-4">
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMoreComments}>
+                            Load More Comments
+                        </button>
+                    </div>
+                    )
+                }
+            </>
         );
     };
 
     const renderUserComments = () => {
         return (
-            comments.map((comment, index) => (
-                <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
-                    <div className="flex justify-between items-center">
-                        <div className="flex-1 overflow-hidden text-left">
-                            <span className="text-white whitespace-normal">
-                                {comment.link_title.replace(/&amp;/g, '&')}
-                            </span>
+            <>
+                {comments.map((comment, index) => (
+                    <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                        <div className="flex justify-between items-center">
+                            <div className="flex-1 overflow-hidden text-left">
+                                <span className="text-white whitespace-normal">
+                                    {comment.link_title.replace(/&amp;/g, '&')}
+                                </span>
+                            </div>
+                            <div className="text-gray-400 ml-4 flex-shrink-0">
+                                <span className="flex items-center">
+                                    <i className="fas fa-arrow-up mr-1"></i>
+                                    {formatUpvotes(comment.ups)}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-gray-400 ml-4 flex-shrink-0">
-                            <span className="flex items-center">
-                                <i className="fas fa-arrow-up mr-1"></i>
-                                {formatUpvotes(comment.ups)}
-                            </span>
+                        <div className="text-gray-400 ml-2 italic">{renderFormattedText(comment.body)}</div>
+                        <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                            <span>by {comment.author}</span>
+                            <span>{formatDate(comment.created_utc)}</span>
                         </div>
                     </div>
-                    <div className="text-gray-400 ml-2 italic">{renderFormattedText(comment.body)}</div>
-                    <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                        <span>by {comment.author}</span>
-                        <span>{formatDate(comment.created_utc)}</span>
+                ))}
+                {userAfterComment && (
+                    <div className="text-center mt-4">
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMoreUserComments}>
+                            Load More Comments
+                        </button>
                     </div>
-                </div>
-            ))
+                )}
+            </>
         );
     };
-
+    
     const toggleCommentVisibility = (index) => {
         const updatedVisibility = [...commentVisibility];
         updatedVisibility[index] = !updatedVisibility[index];
@@ -1058,6 +1396,20 @@ const App = () => {
                         </div>
                     </div>
                     <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Post Flairs</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disablePostFlairs} 
+                                onChange={() => setDisablePostFlairs(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disablePostFlairs ? 'on' : 'off'}`} onClick={() => setDisablePostFlairs(prev => !prev)}>
+                                <div className={`toggle-thumb ${disablePostFlairs ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
                         <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comments</span>
                         <div className="relative">
                             <input 
@@ -1082,6 +1434,34 @@ const App = () => {
                             />
                             <div className={`toggle-switch ${disableCommentReplies ? 'on' : 'off'}`} onClick={() => setDisableCommentReplies(prev => !prev)}>
                                 <div className={`toggle-thumb ${disableCommentReplies ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Comment Tags</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={disableCommentTags} 
+                                onChange={() => setDisableCommentTags(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${disableCommentTags ? 'on' : 'off'}`} onClick={() => setDisableCommentTags(prev => !prev)}>
+                                <div className={`toggle-thumb ${disableCommentTags ? 'on' : 'off'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                        <span className="text-white mr-2" style={{ width: '200px' }}><i class="fas fa-flask mr-2"></i>Enable Search</span>
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                checked={enableSearch} 
+                                onChange={() => setEnableSearch(prev => !prev)} 
+                                className="hidden"
+                            />
+                            <div className={`toggle-switch ${enableSearch ? 'on' : 'off'}`} onClick={() => setEnableSearch(prev => !prev)}>
+                                <div className={`toggle-thumb ${enableSearch ? 'on' : 'off'}`}></div>
                             </div>
                         </div>
                     </div>
@@ -1112,12 +1492,20 @@ const App = () => {
     }, [showNSFWPosts]);
 
     useEffect(() => {
+        localStorage.setItem('disablePostFlairs', JSON.stringify(disablePostFlairs));
+    }, [disablePostFlairs]);
+
+    useEffect(() => {
         localStorage.setItem('disableComments', JSON.stringify(disableComments));
     }, [disableComments]);
 
     useEffect(() => {
         localStorage.setItem('disableCommentReplies', JSON.stringify(disableCommentReplies));
     }, [disableCommentReplies]);
+
+    useEffect(() => {
+        localStorage.setItem('disableCommentTags', JSON.stringify(disableCommentTags));
+    }, [disableCommentTags]);
 
     //_ Function and support functions for saved posts
     const renderSavedPosts = () => {
@@ -1369,7 +1757,7 @@ const App = () => {
                             ) : (
                                 <>
                                     {renderTabSlider()}
-                                    {activeUserTab === 'posts' ? renderPostFeed() : renderUserComments()} {/* Conditional rendering */}
+                                    {activeUserTab === 'posts' ? renderPostFeed() : renderUserComments()}
                                 </>
                             )}
                         </>
