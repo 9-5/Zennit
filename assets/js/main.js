@@ -47,10 +47,15 @@ const App = () => {
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
-    const [enableSearch, setEnableSearch] = useState(() => JSON.parse(localStorage.getItem('enableSearch')) || false);
+    const [disableSearch, setDisableSearch] = useState(() => JSON.parse(localStorage.getItem('disableSearch')) || false);
+    const searchPopupRef = useRef(null);
     const [isSearchPageVisible, setSearchPageVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('subreddit');
+    const [isSearching, setIsSearching] = useState(false);
+    const [results, setResults] = useState([]);
+    const [searchAfter, setSearchAfter] = useState(null);
+    const [loading, setLoading] = useState(false);
 
 
     // Main functions.
@@ -148,12 +153,17 @@ const App = () => {
             });
         };
     
-    const fetchComments = (postId) => {
+    const fetchComments = (postId, subreddit=null) => {
         setLoadingComments(true);
         setUserAfterComment(null);
         setComments([]);
         const post = posts.find(p => p.id === postId) || savedPosts.find(p => p.id === postId);
-        const subredditToUse = post.subreddit;
+        let subredditToUse;
+        if (subreddit) {
+            subredditToUse = subreddit;
+        } else {
+            subredditToUse = post.subreddit;
+        }
         fetch(`https://www.reddit.com/${subredditToUse}/comments/${postId}.json?sort=${commentSort}`)
             .then(response => {
                 if (!response.ok) {
@@ -269,7 +279,7 @@ const App = () => {
     };
 
     const fetchMoreUserComments = () => {
-        if (!userAfterComment) return; // Check if there's a next page
+        if (!userAfterComment) return;
         setLoadingComments(true);
         fetch(`https://www.reddit.com/user/${selectedSubreddit.substring(2)}/comments/.json?limit=25&after=${userAfterComment}`)
             .then(response => {
@@ -345,8 +355,8 @@ const App = () => {
 
         return (
             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); }}>
-                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); setSidebarOpen(true) }}>
+                <div className="flex items-center cursor-pointer" onClick={() => { setSelectedPost(null); setSearchPageVisible(false); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); }}>
+                    <button className="text-white mr-4" onClick={() =>  { setSelectedPost(null); setSearchPageVisible(false); setViewingSaved(false); setViewingAbout(false); setShowConfig(false); setSidebarOpen(true) }}>
                         <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Zennit Icon" className="w-8 h-8" />
                     </button>
                     <div className="ml-2">
@@ -364,7 +374,7 @@ const App = () => {
                         <option value="top">Top</option>
                         <option value="rising">Rising</option>
                     </select>
-                    {enableSearch && (
+                    {!disableSearch && (
                         <button className="text-white ml-4" onClick={() => setShowSearchPopup(true)}>
                             <i className="fas fa-search"></i>
                         </button>
@@ -382,15 +392,32 @@ const App = () => {
     };
 
     const SearchPage = ({ searchTerm, searchType, onClose }) => {
-        const [results, setResults] = useState([]);
-        const [after, setAfter] = useState(null);
-        const [loading, setLoading] = useState(false);
-
+        
+        const viewPost = (postId, subreddit=null) => {
+            const post = results.find(result => result.data.id === postId);
+            if (post) {
+                setSelectedPost({
+                    id: post.data.id,
+                    title: post.data.title,
+                    author: post.data.author,
+                    content: post.data.selftext || '',
+                    url: post.data.url,
+                    subreddit: post.data.subreddit_name_prefixed,
+                    created_utc: post.data.created_utc,
+                    ups: post.data.ups,
+                    num_comments: post.data.num_comments,
+                    permalink: post.data.permalink,
+                });
+                fetchComments(postId, subreddit);
+            }
+        };
         useEffect(() => {
-            handleSearch();
+            if (isSearching) {
+                handleSearch();
+            }
         }, [searchTerm, searchType]);
 
-        const handleSearch = () => {
+        const handleSearch = async () => {
             setLoading(true);
             let fetchUrl;
 
@@ -402,7 +429,7 @@ const App = () => {
                     fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}`;
                     break;
                 case 'post':
-                    fetchUrl = `https://www.reddit.com/r/${selectedSubreddit}/search.json?q=${searchTerm}&sort=hot`;
+                    fetchUrl = `https://www.reddit.com/search.json?q=${searchTerm}&sort=hot`;
                     break;
                 case 'comment':
                     fetchUrl = `https://www.reddit.com/r/${selectedSubreddit}/comments/search.json?q=${searchTerm}&sort=hot`;
@@ -411,33 +438,37 @@ const App = () => {
                     break;
             }
 
-            fetch(fetchUrl)
-                .then(response => response.json())
-                .then(data => {
-                    setResults(data.data.children);
-                    setAfter(data.data.after);
-                })
-                .catch(error => console.error(`Error fetching search results: ${error}`))
-                .finally(() => setLoading(false));
+            try {
+                const response = await fetch(fetchUrl);
+                const data = await response.json();
+                setResults(data.data.children);
+                setSearchAfter(data.data.after);
+            } catch (error) {
+                console.error(`Error fetching search results: ${error}`);
+            } finally {
+                setLoading(false);
+                setIsSearching(false);
+            }
+
         };
 
         const handlePagination = () => {
-            if (!after) return;
+            if (!searchAfter) return;
 
             setLoading(true);
             let fetchUrl;
 
             switch (searchType) {
                 case 'subreddit':
-                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}&after=${after}`;
+                    fetchUrl = `https://www.reddit.com/subreddits/search.json?q=${searchTerm}&after=${searchAfter}`;
                     break;
                 case 'user':
-                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}&after=${after}`;
+                    fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}&after=${searchAfter}`;
                     break;
-                {/*case 'post':
-                    fetchUrl = `https://www.reddit.com/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                case 'post':
+                    fetchUrl = `https://www.reddit.com/search.json?q=${searchTerm}&sort=hot&after=${searchAfter}`;
                     break;
-                case 'comment':
+                {/*case 'comment':
                     fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot&after=${after}`;
                     break;*/}
                 default:
@@ -447,11 +478,22 @@ const App = () => {
             fetch(fetchUrl)
                 .then(response => response.json())
                 .then(data => {
+                    setSearchAfter(data.data.after);
                     setResults(prevResults => [...prevResults, ...data.data.children]);
-                    setAfter(data.data.after);
                 })
                 .catch(error => console.error('Pagination fetch error:', error))
                 .finally(() => setLoading(false));
+        };
+
+        const addSubredditOrUser  = (name) => {
+            let formattedName
+            if (searchType === 'subreddit') {
+                formattedName = name.startsWith('r/') ? name : `r/${name}`;
+            } else {
+                formattedName = name.startsWith('u/') ? name : `u/${name}`;
+            }
+            setSubreddits(prev => [...prev, { name: formattedName }]);
+            localStorage.setItem('subreddits', JSON.stringify([...subreddits, { name: formattedName }]));
         };
 
         return (
@@ -459,34 +501,92 @@ const App = () => {
                 <h2 className="text-white text-xl mb-4">Searched {searchType}s for "{searchTerm}"</h2>
                 {loading && <p>Loading...</p>}
                 <div>
-                    {results.map((result, index) => (
-                        <div key={index}>
-                            {searchType === 'subreddit' && (
-                                <div>
-                                    <h3 className="text-white">r/{result.data.display_name}</h3>
-                                    <p className="text-gray-400">Description: {result.data.public_description}</p>
-                                </div>
-                            )}
-                            {searchType === 'user' && (
-                                <div>
-                                    <h3 className="text-white">{result.data.name}</h3>
-                                    <p className="text-gray-400">Karma: {result.data.link_karma + result.data.comment_karma}</p>
-                                </div>
-                            )}
-                            {/*{searchType === 'post' && (
-                                <div>
-                                    <h3 className="text-white">{result.data}</h3>
-                                    <p className="text-gray-400">{result.data.selftext}</p>
-                                </div>
-                            )}
-                            {searchType === 'comment' && (
-                                <div>
-                                    <h3 className="text-white">{result.data.body}</h3>
-                                </div>
-                            )}*/}
-                        </div>
-                    ))}
-                    {after && (
+                    {results.map((result, index) => {
+                        let displayName, isSubredditInList
+                        if (searchType === 'subreddit') {
+                            displayName = result.data.display_name;
+                            isSubredditInList = subreddits.some(sub => sub.name === `r/${displayName}`);
+                        } else if (searchType === 'user') {
+                            displayName = result.data.name;
+                            isSubredditInList = subreddits.some(sub => sub.name === `u/${displayName}`);
+                        } else {
+                            displayName = result.data.title;
+                        }
+                            return (
+                            <div key={index}>
+                                {searchType === 'subreddit' && (
+                                    <div>
+                                        <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 title-container overflow-hidden">
+                                                    <span className="whitespace-normal">r/{displayName}</span>
+                                                </div>
+                                                {!isSubredditInList && (
+                                                    <button 
+                                                        className="text-green-500 ml-2" 
+                                                        onClick={() => addSubredditOrUser(displayName)}
+                                                    >
+                                                        <i className="fas fa-plus"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="text-gray-400 overflow-hidden">
+                                                    <span>{renderFormattedText(result.data.public_description)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {searchType === 'user' && (
+                                    <div>
+                                        <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 title-container overflow-hidden">
+                                                    <span className="whitespace-normal">u/{displayName}</span>
+                                                    {!isSubredditInList && (
+                                                        <button 
+                                                            className="text-green-500 ml-2" 
+                                                            onClick={() => addSubredditOrUser(displayName)}
+                                                        >
+                                                            <i className="fas fa-plus"></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-gray-400 overflow-hidden">
+                                                    <span>Karma: {result.data.link_karma + result.data.comment_karma}</span>
+                                                </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {searchType === 'post' && (
+                                    <div className="bg-gray-700 p-2 rounded mt-2">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex-1 overflow-hidden">
+                                                <span className="text-white whitespace-normal">{result.data.title}</span>
+                                            </div>
+                                            <div className="text-gray-400 ml-4 flex-shrink-0">
+                                                <span className="flex items-center">
+                                                    <i className="fas fa-arrow-up mr-1"></i>
+                                                    {formatUpvotes(result.data.ups-result.data.downs)}
+                                                </span>
+                                            </div>
+                                            <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => {setSelectedSubreddit(`r/${result.data.subreddit}`); viewPost(result.data.id, (`r/${result.data.subreddit}`));}}>View Post</button>
+                                        </div>
+                                        <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                                            <span>by {result.data.author}</span>
+                                            <span>{formatDate(result.data.created_utc)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {/*searchType === 'comment' && (
+                                    <div>
+                                        <h3 className="text-white">{result.data.body}</h3>
+                                    </div>
+                                )}*/}
+                            </div>
+                        );
+                    })}
+                    {searchAfter && (
                         <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handlePagination}>Load More</button>
                     )}
                 </div>
@@ -496,40 +596,74 @@ const App = () => {
     };
 
     const handleSearch = (term, type) => {
+        setResults([]);
         setSearchTerm(term);
         setSearchType(type);
         setSearchPageVisible(true);
+        setIsSearching(true);
     };
 
     const SearchPopup = ({ onSearch, onClose, currentTheme }) => {
         const [searchTerm, setSearchTerm] = useState('');
         const [searchType, setSearchType] = useState('subreddit');
-
+    
         const handleSearch = () => {
             onSearch(searchTerm, searchType);
             onClose();
         };
 
         return (
-            <div className={`search-popup ${currentTheme}`}>
-                <select onChange={(e) => setSearchType(e.target.value)} value={searchType}>
-                    <option value="subreddit">Subreddits</option>
-                    <option value="user">Users</option>
-                    {/*<option value="post">Posts</option>
-                    <option value="comment">Comments</option>*/}
-                </select>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search..."
-                />
-                <button onClick={handleSearch}>Search</button>
-                <button onClick={onClose}>Close</button>
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className={`bg-gray-800 p-4 rounded ${currentTheme} w-11/12 max-w-md`}>
+                    <h2 className="text-white text-xl mb-4">Search</h2>
+                    <select 
+                        onChange={(e) => setSearchType(e.target.value)} 
+                        value={searchType} 
+                        className="p-2 bg-gray-700 text-white rounded mb-2 w-full"
+                    >
+                        <option value="subreddit">Subreddits</option>
+                        <option value="user">Users</option>
+                        <option value="post">Posts</option>
+                    </select>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search..."
+                        className="w-full p-2 bg-gray-700 text-white rounded mb-2"
+                    />
+                    <div className="flex justify-between">
+                        <button 
+                            onClick={handleSearch} 
+                            className="mt-2 w-full p-2 bg-gray-700 text-white rounded mr-2"
+                        >
+                            Search
+                        </button>
+                        <button 
+                            onClick={onClose} 
+                            className="mt-2 w-full p-2 bg-gray-700 text-white rounded"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     };
-   
+    
+    const handleClickOutsideSearchPopup = (event) => {
+        if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
+            onClose();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutsideSearchPopup);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideSearchPopup);
+        };
+    }, []);
+
     const renderLoadingSpinner = () => {
         return (
             <div className="text-white text-center">
@@ -1471,16 +1605,16 @@ const App = () => {
                         </div>
                     </div>
                     <div className="flex items-center mb-2">
-                        <span className="text-white mr-2" style={{ width: '200px' }}><i class="fas fa-flask mr-2"></i>Enable Search</span>
+                        <span className="text-white mr-2" style={{ width: '200px' }}>Disable Search</span>
                         <div className="relative">
                             <input 
                                 type="checkbox" 
-                                checked={enableSearch} 
-                                onChange={() => setEnableSearch(prev => !prev)} 
+                                checked={disableSearch} 
+                                onChange={() => setDisableSearch(prev => !prev)} 
                                 className="hidden"
                             />
-                            <div className={`toggle-switch ${enableSearch ? 'on' : 'off'}`} onClick={() => setEnableSearch(prev => !prev)}>
-                                <div className={`toggle-thumb ${enableSearch ? 'on' : 'off'}`}></div>
+                            <div className={`toggle-switch ${disableSearch ? 'on' : 'off'}`} onClick={() => setDisableSearch(prev => !prev)}>
+                                <div className={`toggle-thumb ${disableSearch ? 'on' : 'off'}`}></div>
                             </div>
                         </div>
                     </div>
@@ -1524,6 +1658,10 @@ const App = () => {
 
     useEffect(() => {
         localStorage.setItem('disableCommentTags', JSON.stringify(disableCommentTags));
+    }, [disableCommentTags]);
+
+    useEffect(() => {
+        localStorage.setItem('disableSearch', JSON.stringify(disableCommentTags));
     }, [disableCommentTags]);
 
     //_ Function and support functions for saved posts
@@ -1718,6 +1856,7 @@ const App = () => {
             setSelectedPost(null);
             setViewingSaved(false);
             setViewingAbout(false);
+            setSearchPageVisible(false);
         }
     };
 
