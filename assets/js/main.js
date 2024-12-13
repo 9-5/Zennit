@@ -48,7 +48,10 @@ const App = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
     const [enableSearch, setEnableSearch] = useState(() => JSON.parse(localStorage.getItem('enableSearch')) || false);
-    
+    const [isSearchPageVisible, setSearchPageVisible] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchType, setSearchType] = useState('subreddit');
+
 
     // Main functions.
     const fetchPosts = (page) => {
@@ -288,7 +291,7 @@ const App = () => {
                     subreddit: child.data.subreddit
                 }));
                 setComments(prevComments => [...prevComments, ...fetchedComments]);
-                setUserAfterComment(data.data.after); // Update the after state for pagination
+                setUserAfterComment(data.data.after);
             })
             .catch(error => {
                 console.error('User  comment fetch error:', error);
@@ -313,6 +316,7 @@ const App = () => {
         });
         return `${formattedDate} ${formattedTime}`;
     };
+
     const formatUpvotes = (upvotes) => {
         if (upvotes >= 100000) {
             return `${Math.floor(upvotes / 1000)}K`;
@@ -372,25 +376,23 @@ const App = () => {
                         <i className="fas fa-cog active" id="settingsIcon"></i>
                     </button>
                 </div>
-                {showSearchPopup && <SearchPopup onClose={() => setShowSearchPopup(false)} />}
+                {showSearchPopup && <SearchPopup onSearch={handleSearch} onClose={() => setShowSearchPopup(false)} currentTheme={currentTheme} />}
             </div>
         )
     };
 
-    const SearchPopup = ({ onClose }) => {
-        const [searchTerm, setSearchTerm] = useState('');
-        const [searchType, setSearchType] = useState('subreddit');
+    const SearchPage = ({ searchTerm, searchType, onClose }) => {
         const [results, setResults] = useState([]);
         const [after, setAfter] = useState(null);
         const [loading, setLoading] = useState(false);
-    
+
+        useEffect(() => {
+            handleSearch();
+        }, [searchTerm, searchType]);
+
         const handleSearch = () => {
             setLoading(true);
             let fetchUrl;
-
-            if (after === null) {
-                setResults([]);
-            }
 
             switch (searchType) {
                 case 'subreddit':
@@ -400,25 +402,25 @@ const App = () => {
                     fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}`;
                     break;
                 case 'post':
-                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot`;
+                    fetchUrl = `https://www.reddit.com/r/${selectedSubreddit}/search.json?q=${searchTerm}&sort=hot`;
                     break;
                 case 'comment':
-                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot`;
+                    fetchUrl = `https://www.reddit.com/r/${selectedSubreddit}/comments/search.json?q=${searchTerm}&sort=hot`;
                     break;
                 default:
                     break;
             }
-    
+
             fetch(fetchUrl)
                 .then(response => response.json())
                 .then(data => {
                     setResults(data.data.children);
                     setAfter(data.data.after);
                 })
-                .catch(error => console.error('Search fetch error:', error))
+                .catch(error => console.error(`Error fetching search results: ${error}`))
                 .finally(() => setLoading(false));
         };
-    
+
         const handlePagination = () => {
             if (!after) return;
 
@@ -432,15 +434,16 @@ const App = () => {
                 case 'user':
                     fetchUrl = `https://www.reddit.com/users/search.json?q=${searchTerm}&after=${after}`;
                     break;
-                case 'post':
-                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/search.json?q=${searchTerm}&sort=hot&after=${after}`;
+                {/*case 'post':
+                    fetchUrl = `https://www.reddit.com/search.json?q=${searchTerm}&sort=hot&after=${after}`;
                     break;
                 case 'comment':
                     fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot&after=${after}`;
-                    break;
+                    break;*/}
                 default:
                     break;
             }
+
             fetch(fetchUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -450,61 +453,83 @@ const App = () => {
                 .catch(error => console.error('Pagination fetch error:', error))
                 .finally(() => setLoading(false));
         };
-    
+
         return (
-            <div className="search-popup">
-                <button onClick={onClose}>Close</button>
-                <select onChange={(e) => setSearchType(e.target.value)} value={searchType}>
-                    <option value="subreddit">Subreddit</option>
-                    <option value="user">User </option>
-                    <option value="post">Post</option>
-                    <option value="comment">Comment</option>
-                </select>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={`Search ${searchType}`}
-                />
-                <button onClick={handleSearch}>Search</button>
-    
+            <div className="bg-gray-800 p-4 rounded">
+                <h2 className="text-white text-xl mb-4">Searched {searchType}s for "{searchTerm}"</h2>
                 {loading && <p>Loading...</p>}
                 <div>
                     {results.map((result, index) => (
                         <div key={index}>
                             {searchType === 'subreddit' && (
                                 <div>
-                                    <h3>{result.data.display_name}</h3>
-                                    <p>{result.data.public_description}</p>
+                                    <h3 className="text-white">r/{result.data.display_name}</h3>
+                                    <p className="text-gray-400">Description: {result.data.public_description}</p>
                                 </div>
                             )}
                             {searchType === 'user' && (
                                 <div>
-                                    <h3>{result.data.name}</h3>
-                                    <p>Karma: {result.data.link_karma + result.data.comment_karma}</p>
+                                    <h3 className="text-white">{result.data.name}</h3>
+                                    <p className="text-gray-400">Karma: {result.data.link_karma + result.data.comment_karma}</p>
                                 </div>
                             )}
-                            {searchType === 'post' && (
+                            {/*{searchType === 'post' && (
                                 <div>
-                                    <h3>{result.data.title}</h3>
-                                    <p>{result.data.selftext}</p>
+                                    <h3 className="text-white">{result.data}</h3>
+                                    <p className="text-gray-400">{result.data.selftext}</p>
                                 </div>
                             )}
                             {searchType === 'comment' && (
                                 <div>
-                                    <h3>{result.data.body}</h3>
+                                    <h3 className="text-white">{result.data.body}</h3>
                                 </div>
-                            )}
+                            )}*/}
                         </div>
                     ))}
                     {after && (
-                        <button onClick={handlePagination}>Load More</button>
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={handlePagination}>Load More</button>
                     )}
                 </div>
+                <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={onClose}>Close</button>
             </div>
         );
     };
 
+    const handleSearch = (term, type) => {
+        setSearchTerm(term);
+        setSearchType(type);
+        setSearchPageVisible(true);
+    };
+
+    const SearchPopup = ({ onSearch, onClose, currentTheme }) => {
+        const [searchTerm, setSearchTerm] = useState('');
+        const [searchType, setSearchType] = useState('subreddit');
+
+        const handleSearch = () => {
+            onSearch(searchTerm, searchType);
+            onClose();
+        };
+
+        return (
+            <div className={`search-popup ${currentTheme}`}>
+                <select onChange={(e) => setSearchType(e.target.value)} value={searchType}>
+                    <option value="subreddit">Subreddits</option>
+                    <option value="user">Users</option>
+                    {/*<option value="post">Posts</option>
+                    <option value="comment">Comments</option>*/}
+                </select>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search..."
+                />
+                <button onClick={handleSearch}>Search</button>
+                <button onClick={onClose}>Close</button>
+            </div>
+        );
+    };
+   
     const renderLoadingSpinner = () => {
         return (
             <div className="text-white text-center">
@@ -923,20 +948,53 @@ const App = () => {
 
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
+    
         const items = post.gallery_data.items.map(item => {
             const media = post.media_metadata[item.media_id];
-            const src = media.s.u.replace(/&amp;/g, '&');
-            return (
-                <img
-                    key={item.media_id}
-                    src={src}
-                    alt="Gallery item"
-                    className="w-1/4 h-auto rounded mt-2 cursor-pointer"
-                    onClick={() => handleImageClick(src)}
-                />
-            );
-        });
-
+    
+            if (!media) {
+                console.warn(`Media for ID ${item.media_id} is missing or malformed.`);
+                return null;
+            }
+    
+            if (media.e === "AnimatedImage" && media.s && media.s.gif) {
+                return (
+                    <img
+                        key={item.media_id}
+                        src={media.s.gif}
+                        alt="Gallery GIF"
+                        className="w-1/4 h-auto rounded mt-2 cursor-pointer"
+                        onClick={() => handleImageClick(media.s.gif)}
+                    />
+                );
+            } else if (media.e === "Image" && media.s && media.s.u) {
+                const src = media.s.u.replace(/&amp;/g, '&');
+                return (
+                    <img
+                        key={item.media_id}
+                        src={src}
+                        alt="Gallery Image"
+                        className="w-1/4 h-auto rounded mt-2 cursor-pointer"
+                        onClick={() => handleImageClick(src)}
+                    />
+                );
+            } else if (media.e === "Video" && media.s && media.s.mp4) {
+                return (
+                    <video
+                        key={item.media_id}
+                        controls
+                        className="w-1/4 h-auto rounded mt-2 cursor-pointer"
+                        onClick={() => handleImageClick(media.s.mp4)}
+                    >
+                        <source src={media.s.mp4} type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                );
+            }
+    
+            return null;
+        }).filter(item => item !== null);
+    
         return (
             <div className="overflow-x-auto whitespace-nowrap flex">
                 {items}
@@ -1620,7 +1678,7 @@ const App = () => {
 
     const fetchCommitInfo = async () => {
         try {
-            const response = await fetch('https://api.github.com/repos/9-5/Zennit/commits/main'); // Adjust the branch if necessary
+            const response = await fetch('https://api.github.com/repos/9-5/Zennit/commits/main');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -1715,6 +1773,12 @@ const App = () => {
                                 renderSelectedPost()
                             ) : viewingAbout ? (
                                 renderAbout()
+                            ) : isSearchPageVisible ? (
+                                <SearchPage 
+                                    searchTerm={searchTerm} 
+                                    searchType={searchType} 
+                                    onClose={() => setSearchPageVisible(false)} 
+                                />
                             ) : (
                                 <>
                                     {renderTabSlider()}
@@ -1731,6 +1795,12 @@ const App = () => {
                             renderSelectedPost()
                         ) : viewingAbout ? (
                             renderAbout()
+                        ) : isSearchPageVisible ? (
+                            <SearchPage 
+                                searchTerm={searchTerm} 
+                                searchType={searchType} 
+                                onClose={() => setSearchPageVisible(false)} 
+                            />
                         ) : (
                             renderPostFeed()
                         )
