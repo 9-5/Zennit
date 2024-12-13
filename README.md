@@ -14,7 +14,7 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 
-[Technologies Used](#technologies_used)
+[Technologies Used](#technologies-used)
 
 [Installation](#installation)
 
@@ -25,24 +25,34 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 [License](#license)
 
 ## Screenshots
-Include screenshots of your project to visually demonstrate its functionality.
+
+Include some screenshots of the application here
 
 ## Features
-*   Browse Reddit posts and comments in a clean and user-friendly interface.
-*   Add and manage your favorite subreddits.
-*   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
-*   Interact seamlessly with Reddit content.
+
+- Browse Reddit posts and comments in a clean, user-friendly interface.
+- Add and remove subreddits from the sidebar.
+- View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+- Interact with posts and comments: upvote, downvote, save, hide, and report.
+- Supports various themes.
+- PWA for offline use.
 
 ## Technologies Used
-*   React
-*   Tailwind CSS
+
+- [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
+- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development.
+- [Reddit API](https://www.reddit.com/dev/api/) - API to fetch data from Reddit.
 
 ## Installation
 
-To run Zennit locally, follow these steps:
+To run Zennit locally, you can simply clone the repository and open the `index.html` file in your web browser.
 
-1.  Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
-2.  Open `index.html` in your web browser, you can simply open the `index.html` file directly from the HTML file.
+```bash
+git clone https://github.com/0kb/zennit.git
+cd zennit
+```
+
+You can then directly open `index.html` in your web browser.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
