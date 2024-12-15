@@ -20,17 +20,30 @@ View a live demo here: [zen.0kb.org](https://zen.0kb.org/)
 
 ## Features
 
-- **Subreddit Management**: Easily add, select, and delete subreddits from your list.
-- **Post Browsing**: View posts sorted by different criteria such as Hot, New, Top, and Rising.
-- **Comments Section**: Dive into discussions with a dedicated comments view for each post.
-- **Responsive Design**: Optimized for both desktop and mobile devices.
-- **Saved Subreddits**: Stores your favorite subreddits to access them quickly.
+- **Post and Comment Fetching:** Retrieve posts and comments from Reddit with sorting options (hot, new, top, rising).
+- **Pagination Support:** Load more posts and comments seamlessly as you scroll or click.
+- **User-Friendly Sidebar:** Easily manage and navigate through followed subreddits.
+- **Dynamic Post Feed:** View posts with details including title, author, upvotes, and creation date.
+- **Interactive Comment Section:** Display comments with options to toggle visibility and load more.
+- **Customizable Settings Page:** Configure theme selection and content preferences (e.g., NSFW visibility, comment settings).
+- **Toast Notifications:** Inform users of actions taken (e.g., saving posts) with brief messages.
+- **Error Handling:** Display error popups for issues encountered during data fetching.
+- **Confirmation Dialogs:** Confirm actions like deleting subreddits or clearing cache.
+- **Image Enlargement:** Click on images to view them in an enlarged format.
+- **Theming Options:** Choose from multiple themes to customize the UI appearance.
+- **Local Storage Management:** Persist user preferences and settings across sessions.
+- **Responsive Design:** Optimized for various screen sizes, ensuring a mobile-friendly experience.
+- **Search Functionality:** Search for subreddits, users, and posts.
+- **Loading Indicators:** Show loading spinners while data is being fetched.
+- **Swipe Gestures:** Navigate the sidebar using swipe gestures for enhanced usability.
+- **Commit Information Display:** Fetch and show commit details from the GitHub repository for transparency.
 
 ## Technologies Used
 
 - **React**: For building the user interface.
 - **Tailwind CSS**: For styling and responsive design.
 - **Babel**: For JavaScript transpilation.
+- **HammerJS**: For swipe gesture support.
 - **Font Awesome**: For icons.
 - **Reddit API**: To fetch posts and comments from Reddit.
 
