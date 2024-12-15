@@ -1002,7 +1002,7 @@ const App = () => {
                     </div>
                     {!disablePostFlairs && (selectedPost.flair && <span className="flair"><strong>{selectedPost.flair}</strong></span>)}
                 </div>
-                <div className="text-white bg-gray-700 p-2 rounded mt-1">
+                <div className="text-white bg-gray-700 p-2 rounded mt-1 post-body">
                     {renderFormattedText(selectedPost.content)}
                     {renderPostContent(selectedPost)}
                     <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
@@ -1229,7 +1229,7 @@ const App = () => {
 
         const spoilerRegex = /(&gt;!)?(.*?)!(&lt;)/g;
         formattedText = formattedText.replace(spoilerRegex, (match, start, content, end) => {
-            return `<span class="formatted-text spoiler" onclick="this.classList.toggle('revealed');">${content}</span>`;
+            return `<span class="spoiler" onclick="this.classList.toggle('revealed');">${content}</span>`;
         });
 
         formattedText = formattedText.replace(/^\s*&gt;\s*(.+)$/gm, (match, content) => {
@@ -1239,7 +1239,7 @@ const App = () => {
         formattedText = formattedText.replace(/^(#{1,6})\s*(.+)$/gm, (match, hashes, content) => {
             const level = hashes.length;
             const fontSize = `${(6 - level) * 0.25 + 1}em`;
-            return `<h${level} className="ww-anchor formatted-text" style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
+            return `<h${level} className="ww-anchor" style="font-size: ${fontSize}; font-weight: bold;">${content}</h${level}>`;
         });
         
         const inlineRegex = [
@@ -1250,7 +1250,7 @@ const App = () => {
     
         inlineRegex.forEach(({ regex, tag }) => {
             formattedText = formattedText.replace(regex, (match, p1) => {
-                return `<${tag} class="formatted-text">${p1}</${tag}>`;
+                return `<${tag}>${p1}</${tag}>`;
             });
         });
     
@@ -1261,39 +1261,39 @@ const App = () => {
         ];
 
         formattedText = formattedText.replace(/(^|\n)(- .+)/g, (match, p1, p2) => {
-            return `${p1}<div className="formatted-text" style="margin-left: 20px;">• ${p2.slice(2)}</div>`;
+            return `${p1}<div style="margin-left: 20px;">• ${p2.slice(2)}</div>`;
         });
 
         formattedText = formattedText.replace(/(^|\n)(\d+\.\s.+)/g, (match, p1, p2) => {
-            return `${p1}<div className="formatted-text" style="margin-left: 20px;">${p2}</div>`;
+            return `${p1}<div style="margin-left: 20px;">${p2}</div>`;
         });
 
         markdownRegex.forEach(({ regex, tag, className }) => {
             formattedText = formattedText.replace(regex, (match, p1, p2) => {
-                return `<${tag} class="${className || ''} formatted-text">${p2}</${tag}>`;
+                return `<${tag} class="${className || ''}">${p2}</${tag}>`;
             });
         });
         
         const plaintextUrlRegex = /(?<![\[\(])(https?:\/\/[^\s\(\)]+)(?<![\]\)])/g;
         formattedText = formattedText.replace(plaintextUrlRegex, (match) => {
             const cleanMatch = match.replace(/<\/?[^>]*>/g, '');
-            return `<a href="${cleanMatch}" class="text-blue-500 underline formatted-text ww-anchor">${cleanMatch}</a>`;
+            return `<a href="${cleanMatch}" class="text-blue-500 underline ww-anchor">${cleanMatch}</a>`;
         });
 
         const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
         formattedText = formattedText.replace(linkRegex, (match, p1, p2) => {
-            return `<a href="${p2}" class="text-blue-500 underline formatted-text ww-anchor">${p1}</a>`;
+            return `<a href="${p2}" class="text-blue-500 underline ww-anchor">${p1}</a>`;
         });
         
         const codeBlockRegex = /((?:^|\n)(?: {4}.*\n)+)/g;
         formattedText = formattedText.replace(codeBlockRegex, (match, p1) => {
             const codeContent = p1.replace(/^ {4}/gm, '');
-            return `<pre className="formatted-text">${codeContent}</pre>`;
+            return `<pre>${codeContent}</pre>`;
         });
     
         formattedText = formattedText.replace(/\n/g, '<br/>');
         return (
-            <div className="post-body">
+            <div className="body-text">
                 <span dangerouslySetInnerHTML={{ __html: formattedText }} />
                 {imageUrls.map((url, index) => (
                     <img
@@ -1358,7 +1358,7 @@ const App = () => {
 
         return (
             <>
-                {<div className="text-white bg-gray-700 p-2 rounded mt-1 comment-body">
+                {<div className="text-white bg-gray-700 p-2 rounded mt-1">
                     <div className="flex items-center text-gray-400 text-sm cursor-pointer" onClick={toggleVisibility}>
                         <button className="ml-2 text-blue-500">
                             {isVisible ? '[ - ]' : '[ + ]'}

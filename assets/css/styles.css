@@ -9,17 +9,10 @@ body {
     overflow-wrap: break-word; 
     white-space: normal; 
 }
-.comment-body {
+.body-text {
     max-width: 100%;
     word-wrap: break-word;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-}
-.formatted-text {
-    max-width: 100%;
-    word-wrap: break-word;
-    word-break: keep-all;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
