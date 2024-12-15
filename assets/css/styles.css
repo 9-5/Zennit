@@ -11,9 +11,8 @@ body {
 }
 .body-text {
     max-width: 100%;
-    word-wrap: break-word;
-    word-break: break-word;
-    overflow-wrap: break-word;
+
+    overflow-wrap: auto;
     white-space: pre-wrap;
 }
 .hash {
