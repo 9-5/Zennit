@@ -16,6 +16,13 @@ body {
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
+.formatted-text {
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
 .hash {
     font-size: 13px;
     font-family: 'Courier New', Courier, monospace;
