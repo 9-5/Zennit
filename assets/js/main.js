@@ -48,7 +48,6 @@ const App = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const hammerRef = useRef(null);
     const [disableSearch, setDisableSearch] = useState(() => JSON.parse(localStorage.getItem('disableSearch')) || false);
-    const searchPopupRef = useRef(null);
     const [isSearchPageVisible, setSearchPageVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState('subreddit');
@@ -617,10 +616,30 @@ const App = () => {
             onSearch(searchTerm, searchType);
             onClose();
         };
+    
+        const searchPopupRef = useRef(null);
+        useEffect(() => {
+            const handleClickOutside = (event) => {
+                if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
+                    onClose();
+                }
+            };
+    
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [onClose]);
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        };
 
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className={`bg-gray-800 p-4 rounded ${currentTheme} w-11/12 max-w-md`}>
+                <div ref={searchPopupRef} className={`bg-gray-800 p-4 rounded w-11/12 max-w-md`}>
                     <h2 className="text-white text-xl mb-4">Search</h2>
                     <select 
                         onChange={(e) => setSearchType(e.target.value)} 
@@ -635,7 +654,8 @@ const App = () => {
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search..."
+                        onKeyDown={handleKeyDown}
+                        placeholder="Enter search term..."
                         className="w-full p-2 bg-gray-700 text-white rounded mb-2"
                     />
                     <div className="flex justify-between">
@@ -656,19 +676,6 @@ const App = () => {
             </div>
         );
     };
-    
-    const handleClickOutsideSearchPopup = (event) => {
-        if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
-            onClose();
-        }
-    };
-
-    useEffect(() => {
-        document.addEventListener('mousedown', handleClickOutsideSearchPopup);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutsideSearchPopup);
-        };
-    }, []);
 
     const renderLoadingSpinner = () => {
         return (
@@ -1002,7 +1009,7 @@ const App = () => {
                     </div>
                     {!disablePostFlairs && (selectedPost.flair && <span className="flair"><strong>{selectedPost.flair}</strong></span>)}
                 </div>
-                <div className="text-white bg-gray-700 p-2 rounded mt-1">
+                <div className="text-white bg-gray-700 p-2 rounded mt-1 post-body">
                     {renderFormattedText(selectedPost.content)}
                     {renderPostContent(selectedPost)}
                     <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
@@ -1293,7 +1300,7 @@ const App = () => {
     
         formattedText = formattedText.replace(/\n/g, '<br/>');
         return (
-            <div className="post-body">
+            <div className="body-text">
                 <span dangerouslySetInnerHTML={{ __html: formattedText }} />
                 {imageUrls.map((url, index) => (
                     <img

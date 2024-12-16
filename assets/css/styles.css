@@ -9,11 +9,11 @@ body {
     overflow-wrap: break-word; 
     white-space: normal; 
 }
-.comment-body {
+.body-text {
     max-width: 100%;
     word-wrap: break-word;
-    word-break: keep-all;
-    overflow-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: auto;
     white-space: pre-wrap;
 }
 .hash {
