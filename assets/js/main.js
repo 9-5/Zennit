@@ -184,11 +184,13 @@ const App = () => {
                         isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
                         ups: child.data.ups - child.data.downs,
                         locked: child.data.locked,
+                        created_utc: child.data.created_utc,
                         replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                             author: reply.data.author,
                             body: reply.data.body,
                             media_metadata: reply.data.media_metadata,
                             pinned: reply.data.stickied,
+                            created_utc: reply.data.created_utc,
                             ups: reply.data.ups - reply.data.downs,
                             isEdited: (typeof reply.data.edited === 'number') ? formatDate(reply.data.edited) : false
                         })) : []
@@ -225,10 +227,12 @@ const App = () => {
                     media_metadata: child.data.media_metadata,
                     pinned: child.data.stickied,
                     ups: child.data.ups - child.data.downs,
+                    created_utc: child.data.created_utc,
                     replies: child.data.replies ? child.data.replies.data.children.map(reply => ({
                         author: reply.data.author,
                         body: reply.data.body,
                         media_metadata: reply.data.media_metadata,
+                        created_utc: reply.data.created_utc,
                         pinned: reply.data.stickied,
                         ups: reply.data.ups - reply.data.downs
                     })) : []
@@ -265,7 +269,8 @@ const App = () => {
                     created_utc: child.data.created_utc,
                     permalink: child.data.permalink,
                     link_title: child.data.link_title,
-                    subreddit: child.data.subreddit
+                    subreddit: child.data.subreddit,
+                    created_utc: child.data.created_utc
                 }));
                 setComments(prevComments => [...prevComments, ...fetchedComments]);
                 setUserAfterComment(data.data.after);
@@ -298,7 +303,8 @@ const App = () => {
                     created_utc: child.data.created_utc,
                     permalink: child.data.permalink,
                     link_title: child.data.link_title,
-                    subreddit: child.data.subreddit
+                    subreddit: child.data.subreddit,
+                    created_utc: child.data.created_utc
                 }));
                 setComments(prevComments => [...prevComments, ...fetchedComments]);
                 setUserAfterComment(data.data.after);
@@ -764,6 +770,7 @@ const App = () => {
     const renderSidebar = () => {
         return (
             <div ref={sidebarRef} className={`fixed inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out w-64 bg-gray-900 p-4 z-50`}>
+                {showPopup && (renderSubredditDeletePopup())}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                         <img src="https://0kb.org/app/zennit/assets/favicon/favicon-96x96.png" alt="Reddit Icon" className="w-8 h-8" />
@@ -1367,6 +1374,7 @@ const App = () => {
                                 {comment.pinned && <span className="text-yellow-500 ml-2"><i className="fas fa-thumbtack"></i></span>}
                             </span>
                         )}
+                        <span className="ml-auto text-gray-400 text-xs">{formatDate(comment.created_utc)}</span>
                     </div>
                     {isVisible && (
                         <div className="comment-body">
@@ -1809,7 +1817,11 @@ const App = () => {
         );
     };
 
-    const handleViewAbout = () => {
+/*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Set viewingAbout to true and setShowSettings to false. This is used
+     * when the user clicks on the "About" button in the settings page.
+/******  a3754437-8607-4cc0-88b7-71b523b17bd9  *******/    const handleViewAbout = () => {
         setViewingAbout(true);
         setShowSettings(false);
     };
@@ -1893,7 +1905,6 @@ const App = () => {
         <div className="flex h-screen">
             <div>
                 {renderSidebar()}
-                {showPopup && (renderSubredditDeletePopup())}
             </div>
             <div className="flex-1 bg-gray-800 p-4 flex flex-col">
                 {contentBlockerDetected && (renderContentBlocked())}
@@ -1948,9 +1959,9 @@ const App = () => {
                 {enlargedImage && (renderEnlargedPostImages())}
                 {enlargedCommentImage && (renderEnlargedCommentImages())}
             </div>
+            {showErrorPopup && renderErrorPopup()}
             {showDeletePopup && (renderDeleteSavedPostPopup())}
             {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-            {showErrorPopup && renderErrorPopup()}
         </div>
     )
 }
