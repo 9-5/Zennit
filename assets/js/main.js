@@ -81,6 +81,7 @@ const App = () => {
                     author: child.data.author,
                     content: child.data.selftext,
                     url: child.data.url,
+                    permalink: child.data.permalink,
                     subreddit: child.data.subreddit_name_prefixed,
                     created_utc: child.data.created_utc,
                     gallery_data: child.data.gallery_data,
@@ -90,6 +91,8 @@ const App = () => {
                     media: child.data.media,
                     flair: child.data.link_flair_text || '',
                     nsfw: child.data.over_18,
+                    isCrosspost: !!child.data.crosspost_parent,
+                    crosspostData: child.data.crosspost_parent_list ? child.data.crosspost_parent_list[0] : null,
                     isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
                     locked: child.data.locked
                 };
@@ -128,6 +131,7 @@ const App = () => {
                         author: child.data.author,
                         content: child.data.selftext,
                         url: child.data.url,
+                        permalink: child.data.permalink,
                         subreddit: child.data.subreddit_name_prefixed,
                         created_utc: child.data.created_utc,
                         gallery_data: child.data.gallery_data,
@@ -137,6 +141,8 @@ const App = () => {
                         media: child.data.media,
                         flair: child.data.link_flair_text || '',
                         nsfw: child.data.over_18,
+                        isCrosspost: !!child.data.crosspost_parent,
+                    crosspostData: child.data.crosspost_parent_list ? child.data.crosspost_parent_list[0] : null,
                         isEdited: (typeof isEdited === 'number') ? formatDate(isEdited) : false,
                         locked: child.data.locked
                     };
@@ -694,6 +700,9 @@ const App = () => {
                         {selectedSubreddit.startsWith('user/') || selectedSubreddit.startsWith('u/') ? (
                             <span className="text-gray-400 text-sm">{post.subreddit}</span>
                         ) : null}
+                        {post.isCrosspost && post.crosspostData ? (
+                            <span className="text-gray-400 text-sm"> Crosspost from {post.crosspostData.subreddit_name_prefixed}</span>
+                        ) : null}
                         <div className="flex justify-between items-center">
                             <div className="flex-1 overflow-hidden">
                                 <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
@@ -990,7 +999,11 @@ const App = () => {
         return (
             <div>
                 <div className="text-white bg-gray-700 p-2 rounded mt-1 flex flex-col">
+                    {selectedPost.isCrosspost && selectedPost.crosspostData ? (
+                        <span className="text-gray-400 xpost">Crosspost from {selectedPost.crosspostData.subreddit_name_prefixed}</span>
+                    ) : null}     
                     <div className="flex justify-between items-start">
+                                           
                         <div className="flex-1 title-container overflow-hidden">
                             <span className="whitespace-normal">{selectedPost.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{selectedPost.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{selectedPost.title.replace(/&amp;/g, '&')}</span>
                         </div>
@@ -1010,9 +1023,16 @@ const App = () => {
                     {!disablePostFlairs && (selectedPost.flair && <span className="flair"><strong>{selectedPost.flair}</strong></span>)}
                 </div>
                 <div className="text-white bg-gray-700 p-2 rounded mt-1 post-body">
+                    {selectedPost.isCrosspost && selectedPost.crosspostData ? (
+                        <div className="text-gray-400 xpost">
+                            <span className="xpost">Crosspost from {selectedPost.crosspostData.subreddit_name_prefixed}</span>
+                            <span className="text-sm mt-1 flex justify-between"><span>by {selectedPost.crosspostData.author}</span><span>{formatDate(selectedPost.crosspostData.created_utc)}</span></span>
+                            {renderFormattedText(selectedPost.crosspostData.selftext)}
+                        </div>
+                    ) : null}
                     {renderFormattedText(selectedPost.content)}
                     {renderPostContent(selectedPost)}
-                    <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.url)}>
+                    <button className="p-2 bg-gray-700 text-white rounded" onClick={() => sharePost(selectedPost.permalink)}>
                         <i className="fas fa-share-alt"></i>  Share Post
                     </button>
                     <button className="ml-4 p-2 bg-gray-700 text-white rounded" onClick={() => savePost(selectedPost)}>
