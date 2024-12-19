@@ -479,9 +479,6 @@ const App = () => {
                 case 'post':
                     fetchUrl = `https://www.reddit.com/search.json?q=${searchTerm}&sort=hot&after=${searchAfter}`;
                     break;
-                {/*case 'comment':
-                    fetchUrl = `https://www.reddit.com/r/${searchTerm}/comments/search.json?q=${searchTerm}&sort=hot&after=${after}`;
-                    break;*/}
                 default:
                     break;
             }
@@ -589,11 +586,6 @@ const App = () => {
                                         </div>
                                     </div>
                                 )}
-                                {/*searchType === 'comment' && (
-                                    <div>
-                                        <h3 className="text-white">{result.data.body}</h3>
-                                    </div>
-                                )}*/}
                             </div>
                         );
                     })}
@@ -1113,6 +1105,8 @@ const App = () => {
         }
         return null;
     };
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [galleryImages, setGalleryImages] = useState([]);
 
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
@@ -1125,6 +1119,15 @@ const App = () => {
                 return null;
             }
     
+            const handleClick = () => {
+                const src = media.e === "AnimatedImage" && media.s && media.s.gif ? media.s.gif : media.s.u;
+                const allImages = post.gallery_data.items.map(i => {
+                    const m = post.media_metadata[i.media_id];
+                    return m.e === "AnimatedImage" && m.s && m.s.gif ? m.s.gif : m.s.u;
+                });
+                handleImageClick(src, allImages); // Pass all images to handleImageClick
+            };
+    
             if (media.e === "AnimatedImage" && media.s && media.s.gif) {
                 return (
                     <img
@@ -1132,7 +1135,7 @@ const App = () => {
                         src={media.s.gif}
                         alt="Gallery GIF"
                         className="w-1/4 h-auto rounded mt-2 cursor-pointer"
-                        onClick={() => handleImageClick(media.s.gif)}
+                        onClick={handleClick}
                     />
                 );
             } else if (media.e === "Image" && media.s && media.s.u) {
@@ -1143,7 +1146,7 @@ const App = () => {
                         src={src}
                         alt="Gallery Image"
                         className="w-1/4 h-auto rounded mt-2 cursor-pointer"
-                        onClick={() => handleImageClick(src)}
+                        onClick={handleClick}
                     />
                 );
             } else if (media.e === "Video" && media.s && media.s.mp4) {
@@ -1152,7 +1155,7 @@ const App = () => {
                         key={item.media_id}
                         controls
                         className="w-1/4 h-auto rounded mt-2 cursor-pointer"
-                        onClick={() => handleImageClick(media.s.mp4)}
+                        onClick={handleClick}
                     >
                         <source src={media.s.mp4} type="video/mp4" />
                         Your browser does not support the video tag.
@@ -1173,13 +1176,54 @@ const App = () => {
     const renderEnlargedPostImages = () => {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
-                <img src={enlargedImage} alt="Enlarged" className="max-w-full max-h-full" />
+                <div className="absolute inset-0 flex items-center justify-between px-4">
+                    <button 
+                        className="text-white bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => {
+                                const newIndex = prev === 0 ? galleryImages.length - 1 : prev - 1;
+                                setEnlargedImage(galleryImages[newIndex]);
+                                return newIndex;
+                            });
+                        }}
+                    >
+                        ←
+                    </button>
+                    <button 
+                        className="text-white bg-black bg-opacity-50 p-2 rounded-full hover:bg-opacity-75"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => {
+                                const newIndex = prev === galleryImages.length - 1 ? 0 : prev + 1;
+                                setEnlargedImage(galleryImages[newIndex]);
+                                return newIndex;
+                            });
+                        }}
+                    >
+                        →
+                    </button>
+                </div>
+                <img 
+                    src={enlargedImage} 
+                    alt="Enlarged" 
+                    className="max-w-full max-h-full"
+                    onError={() => console.error("Failed to load image:", enlargedImage)}
+                    onClick={handleCloseImage}
+                />
+                <div className="absolute bottom-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
+                    {currentImageIndex + 1} / {galleryImages.length}
+                </div>
             </div>
-        )
+        );
     };
 
-    const handleImageClick = (src) => {
-        setEnlargedImage(src);
+    const handleImageClick = (src, images = []) => {
+        const cleanedSrc = src.replace(/&amp;/g, '&');
+        const cleanedImages = images.map(image => image.replace(/&amp;/g, '&'));
+        setEnlargedImage(cleanedSrc);
+        setGalleryImages(cleanedImages);
+        setCurrentImageIndex(cleanedImages.indexOf(cleanedSrc));
     };
 
     const handleCloseImage = () => {
