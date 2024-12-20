@@ -1289,12 +1289,23 @@ const App = () => {
         let formattedText = text;
         formattedText = formattedText.replace(/\\/g, '');
         formattedText = formattedText.replace(/\n\n+/g, '\n');
-    
-        const imageUrls = [];
+        
+        let captions = [];
+        let imageUrls = [];
+        const previewRedditCaptionRegex = /\[([^\]]+)?\]?\s*\((https?:\/\/preview\.redd\.it\/[^\s]+)\)/g;
+        formattedText = formattedText.replace(previewRedditCaptionRegex, (match, captionText, url) => {
+            const decodedUrl = url.replace(/&amp;/g, '&');
+            const cleanedUrl = decodedUrl.endsWith(')') ? decodedUrl.slice(0, -1) : decodedUrl;
+            captions.push(captionText ? captionText : "");
+            imageUrls.push(cleanedUrl);
+            return '';
+        });
+
         const previewRedditRegex = /(https?:\/\/preview\.redd\.it\/[^\s]+)/g;
         formattedText = formattedText.replace(previewRedditRegex, (match) => {
             const decodedUrl = match.replace(/&amp;/g, '&');
             imageUrls.push(decodedUrl);
+            captions.push('');
             return '';
         });
 
@@ -1361,22 +1372,30 @@ const App = () => {
             const codeContent = p1.replace(/^ {4}/gm, '');
             return `<pre>${codeContent}</pre>`;
         });
-    
+
+        formattedText = formattedText.replace(/\n\n+/g, '');
         formattedText = formattedText.replace(/\n/g, '<br/>');
+
         return (
             <div className="body-text">
                 <span dangerouslySetInnerHTML={{ __html: formattedText }} />
-                {imageUrls.map((url, index) => (
-                    <img
-                        key={index}
-                        src={url}
-                        alt="Comment embedded content"
-                        className="mt-2 rounded cursor-pointer"
-                        height="30%"
-                        width="30%"
-                        onClick={() => setEnlargedCommentImage(url)}
-                    />
-                ))}
+                    {imageUrls.map((url, index) => (
+                        <div key={index} className="image-container">
+                            <img
+                                src={url}
+                                alt="Embedded Content"
+                                className="mt-2 rounded cursor-pointer"
+                                height="30%"
+                                width="30%"
+                                onClick={() => setEnlargedCommentImage(url)}
+                            />
+                            {captions[index] && (
+                                <div style={{ fontSize: '0.8em', color: '#aaa', marginTop: '4px' }}>
+                                    {captions[index]}
+                                </div>
+                            )}
+                        </div>
+                    ))}
             </div>
         );
     };
