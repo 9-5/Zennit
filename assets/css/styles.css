@@ -37,203 +37,143 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-#post-image {
-    max-height: 75vh;
-}
-#comment-image {
-    max-height: 75vh;
-}
-.sidebar {
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
+#subreddit-input {
     background-color: #333;
-    color: white;
-    padding: 20px;
-    transition: transform 0.3s ease-in-out;
-    transform: translateX(-100%);
-    z-index: 1000;
-    overflow-y: auto;
+    color: #fff;
+    border: 1px solid #555;
 }
-
-.sidebar.open {
-    transform: translateX(0);
+.comment {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
 }
-
-.sidebar-toggle {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    z-index: 1001;
+.comment-author {
+    font-weight: bold;
+    margin-right: 5px;
 }
-
-.sidebar-list {
+.comment-body {
+    margin-top: 5px;
+}
+.comment-replies {
+    margin-left: 20px;
+}
+.subreddit-sidebar {
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+}
+.subreddit-sidebar h2 {
+    margin-bottom: 10px;
+}
+.subreddit-list {
     list-style: none;
     padding: 0;
 }
-
-.sidebar-list li {
-    padding: 10px 0;
-    border-bottom: 1px solid #555;
+.subreddit-list li {
+    padding: 5px 0;
+    cursor: pointer;
+}
+.subreddit-list li:hover {
+    text-decoration: underline;
+}
+.post {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-list li:last-child {
-    border-bottom: none;
+.post-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
 }
 
-.sidebar-list a {
-    color: white;
+.post-author {
+    font-size: 0.9em;
+    color: #999999;
+    margin-bottom: 5px;
+}
+
+.post-details {
+    font-size: 0.8em;
+    color: #999999;
+}
+
+.post-content {
+    color: #dddddd;
+    margin-top: 10px;
+}
+
+.post a {
+    color: #bbbbbb;
     text-decoration: none;
-    display: block;
 }
 
-.sidebar-list a:hover {
-    color: #bbb;
+.post a:hover {
+    text-decoration: underline;
 }
 /* width */
 ::-webkit-scrollbar {
-    width: 5px;
+    width: 7px;
   }
 
   /* Track */
   ::-webkit-scrollbar-track {
-    background: #f1f1f100;
+    background: #1e1e1e;
   }
 
   /* Handle */
   ::-webkit-scrollbar-thumb {
     background: #888;
+    border-radius: 15px;
   }
 
   /* Handle on hover */
   ::-webkit-scrollbar-thumb:hover {
     background: #555;
   }
-  .overlay {
+  .popup {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-    z-index: 999; /* Ensure it's above other content but below the sidebar */
-    display: none; /* Hidden by default */
-}
-
-.overlay.active {
-    display: block; /* Show the overlay when active */
-}
-.context-menu {
-    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: #333;
     color: white;
-    border: 1px solid #555;
-    padding: 5px 0;
-    min-width: 150px;
-    z-index: 1002;
-}
-
-.context-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.context-menu li {
-    padding: 8px 15px;
-    cursor: pointer;
-}
-
-.context-menu li:hover {
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
+  
+  .popup button {
     background-color: #555;
-}
-.spinner-container {
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-top: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .popup button:hover {
+    background-color: #777;
+  }
+.toast {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    opacity: 0.9;
+    z-index: 1000;
 }
-
-.spinner {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top: 4px solid #fff;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-.default {
-    background-color: #1e1e1e;
-}
-
-.default .bg-gray-700 {
-    background-color: #374151;
-}
-
-.default .bg-gray-600 {
-    background-color: #4b5563;
-}
-
-.default .bg-gray-800 {
-    background-color: #1f2937;
-}
-
-.default .bg-red-600 {
-    background-color: #dc2626;
-}
-
-.default .bg-gray-900 {
-    background-color: #111827;
-}
-
-.default .text-white {
-    color: #ffffff;
-}
-
-.default .text-gray-400 {
-    color: #9ca3af;
-}
-
-.default .text-blue-500 {
-    color: #3b82f6;
-}
-
-.default .border-gray-700 {
-    border-color: #374151;
-}
-
-.default .border-gray-500 {
-    border-color: #6b7280;
-}
-
-.default .bg-black {
-    background-color: #000000;
-}
-
-.default .bg-opacity-50 {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Amethyst Theme */
-.amethyst {
+.amethyst body {
     background-color: #1e1e1e; /* A dark background */
 }
 
