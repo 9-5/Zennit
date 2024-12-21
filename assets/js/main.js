@@ -1218,6 +1218,32 @@ const App = () => {
         );
     };
 
+    useEffect(() => {
+        if (enlargedImage) {
+            const handleKeyDown = (event) => {
+                if (event.key === 'ArrowLeft') {
+                    setCurrentImageIndex((prev) => {
+                        const newIndex = prev === 0 ? galleryImages.length - 1 : prev - 1;
+                        setEnlargedImage(galleryImages[newIndex]);
+                        return newIndex;
+                    });
+                } else if (event.key === 'ArrowRight') {
+                    setCurrentImageIndex((prev) => {
+                        const newIndex = prev === galleryImages.length - 1 ? 0 : prev + 1;
+                        setEnlargedImage(galleryImages[newIndex]);
+                        return newIndex;
+                    });
+                }
+            };
+    
+            document.addEventListener('keydown', handleKeyDown);
+            
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, [enlargedImage, galleryImages]);
+    
     const handleImageClick = (src, images = []) => {
         const cleanedSrc = src.replace(/&amp;/g, '&');
         const cleanedImages = images.map(image => image.replace(/&amp;/g, '&'));
