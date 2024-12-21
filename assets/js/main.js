@@ -29,6 +29,8 @@ const App = () => {
     const [postToDelete, setPostToDelete] = useState(null);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [editMode, setEditMode] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [galleryImages, setGalleryImages] = useState([]);
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [showSettings, setShowSettings] = useState(false);
@@ -1105,9 +1107,7 @@ const App = () => {
         }
         return null;
     };
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [galleryImages, setGalleryImages] = useState([]);
-
+    
     const renderGallery = (post) => {
         if (!post.gallery_data || !post.media_metadata) return null;
     
@@ -1172,7 +1172,7 @@ const App = () => {
             </div>
         );
     };
-
+    
     const renderEnlargedPostImages = () => {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseImage}>
@@ -1211,9 +1211,11 @@ const App = () => {
                     onError={() => console.error("Failed to load image:", enlargedImage)}
                     onClick={handleCloseImage}
                 />
-                <div className="absolute bottom-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
-                    {currentImageIndex + 1} / {galleryImages.length}
-                </div>
+                {galleryImages.length > 0 && (
+                    <div className="absolute bottom-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
+                        {currentImageIndex + 1} / {galleryImages.length}
+                    </div>
+                )}
             </div>
         );
     };
@@ -1933,11 +1935,7 @@ const App = () => {
         );
     };
 
-/*************  ✨ Codeium Command ⭐  *************/
-    /**
-     * Set viewingAbout to true and setShowSettings to false. This is used
-     * when the user clicks on the "About" button in the settings page.
-/******  a3754437-8607-4cc0-88b7-71b523b17bd9  *******/    const handleViewAbout = () => {
+    const handleViewAbout = () => {
         setViewingAbout(true);
         setShowSettings(false);
     };
