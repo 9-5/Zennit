@@ -18,9 +18,37 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage
-... (FILE CONTENT TRUNCATED) ...
-n directly from the HTML file.
+[Usage](#usage)
+
+[Screenshots](#screenshots)
+
+## Features
+
+-   Browse Reddit posts and comments in a clean and user-friendly interface.
+-   Add and remove subreddits from the sidebar.
+-   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+-   View images and videos directly in the app.
+-   Save posts for later viewing.
+-   Customize the theme to your liking.
+-   Mobile-first design for a seamless experience on all devices.
+
+## Technologies Used
+
+-   [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
+-   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
+-   [Reddit API](https://www.reddit.com/dev/api/) - The API used to fetch Reddit posts and comments.
+
+## Installation
+
+To run Zennit locally, you will need to have Node.js and npm installed.
+
+1. Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
+2. Navigate to the project directory: `cd zennit`
+3. Install the dependencies: `npm install`
+4. Start the development server: `npm start`
+5. Open your web browser and go to `http://localhost:3000`
+
+__Alternatively you can simply open index.html directly from the HTML file.__
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 

@@ -34,25 +34,14 @@ body {
     display: inline-block;
     width: 12ch;
     overflow: hidden;
-    white-space: nowrap
-... (FILE CONTENT TRUNCATED) ...
-    background-color: rgba(224, 242, 254, 0.5); 
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
-.amethyst .bg-gray-700 {
-    background-color: #3e2a6b; 
-}
-
-.amethyst .bg-gray-600 {
-    background-color: #5b4a8b; 
-}
-
-.amethyst .bg-gray-800 {
-    background-color: #7a6b9b; 
-}
-
-.amethyst .bg-red-600 {
-    background-color: #ffcccb; 
+/* Amethyst Theme */
+.amethyst body {
+    background-color: #2a1b3d; 
+    color: #e0d6f2; 
 }
 
 .amethyst .bg-gray-900 {
@@ -68,7 +57,7 @@ body {
 }
 
 .amethyst .text-blue-500 {
-    color: #4a1c6b; 
+  color: #4a1c6b; 
 }
 
 .amethyst .border-gray-700 {
