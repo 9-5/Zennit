@@ -36,12 +36,253 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    vertical-align: text-top;
+}
+.subreddit-sidebar {
+    width: 250px;
+    background-color: #2c2c2c;
+    color: #fff;
+    padding: 10px;
 }
 
-/* Amethyst Theme */
+.subreddit-sidebar h2 {
+    margin-bottom: 10px;
+}
+
+.subreddit-list {
+    list-style: none;
+    padding: 0;
+}
+
+.subreddit-list li {
+    padding: 5px 0;
+    cursor: pointer;
+}
+
+/* New Styles for Theme Toggle */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.theme-toggle-icon {
+    margin-right: 5px;
+}
+
+.dark-mode {
+    background-color: #333;
+    color: #fff;
+}
+
+/* Styles for Settings Menu */
+.settings-menu {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.settings-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-menu li {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.settings-menu li:hover {
+    background-color: #555;
+}
+
+/* Styles for Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 15px 30px;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateX(100%);
+    opacity: 0;
+}
+/* Styles for Delete Post Popup */
+.delete-post-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.delete-post-popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.delete-post-popup-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+
+/* Styles for Enlarged Image */
+.enlarged-image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.enlarged-image-container {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.enlarged-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+/* Error Popup Styles */
+.error-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.error-popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.error-popup-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+/* Styles for Search Page */
+.search-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.search-results {
+    padding: 20px;
+}
+
+.search-results h2 {
+    margin-bottom: 20px;
+}
+
+.search-results ul {
+    list-style: none;
+    padding: 0;
+}
+
+.search-results li {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.search-results li:last-child {
+    border-bottom: none;
+}
 .amethyst body {
-    background-color: #2a1b3d; 
+    background-color: #2a1b3e;
+    color: #e0d6f2;
+}
+
+.amethyst .bg-gray-900 {
+    background-color: #2a1b3e;
+}
+
+.amethyst .text-white {
     color: #e0d6f2; 
+}
+
+.amethyst .text-gray-400 {
+    color: #b0a1c1; 
+}
+
+.amethyst .text-blue-500 {
+    color: #4a1c6b; 
+}
+
+.amethyst .border-gray-700 {
+    border-color: #5b4a8b; 
+}
+
+.amethyst .border-gray-500 {
+    border-color: #7a6b9b; 
+}
+
+.amethyst .bg-black {
+    background-color: #3e2a6b; 
+}
+
+.amethyst .bg-opacity-50 {
+    background-color: rgba(224, 242, 254, 0.5); 
+}
+
+.amethyst .bg-gray-700 {
+    background-color: #3e2a6b; 
+}
+
+.amethyst .bg-gray-600 {
+    background-color: #5b4a8b; 
+}
+
+.amethyst .bg-gray-800 {
+    background-color: #7a6b9b; 
+}
+
+.amethyst .bg-red-600 {
+    background-color: #ffcccb; 
 }
 
 .amethyst .bg-gray-900 {
@@ -57,7 +298,7 @@ body {
 }
 
 .amethyst .text-blue-500 {
-  color: #4a1c6b; 
+    color: #4a1c6b; 
 }
 
 .amethyst .border-gray-700 {

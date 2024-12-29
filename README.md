@@ -20,35 +20,42 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Usage](#usage)
 
-[Screenshots](#screenshots)
+[Contributing](#contributing)
+
+[License](#license)
+
+## Screenshots
+
+Include some screenshots of the application in action.
 
 ## Features
 
--   Browse Reddit posts and comments in a clean and user-friendly interface.
--   Add and remove subreddits from the sidebar.
--   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
--   View images and videos directly in the app.
--   Save posts for later viewing.
--   Customize the theme to your liking.
--   Mobile-first design for a seamless experience on all devices.
+List the key features of your application. Some examples:
+
+*   Browse Reddit posts and comments in a clean and user-friendly interface.
+*   Add and manage your favorite subreddits.
+*   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+*   Mobile-first design for seamless browsing on any device.
+*   Theme support (light and dark themes)
+*   Image previews and gallery view.
+*   Search functionality.
 
 ## Technologies Used
 
--   [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
--   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
--   [Reddit API](https://www.reddit.com/dev/api/) - The API used to fetch Reddit posts and comments.
+*   React
+*   Tailwind CSS
+*   Reddit API
 
 ## Installation
 
-To run Zennit locally, you will need to have Node.js and npm installed.
+Instructions on how to install and set up the project on a local machine.
 
-1. Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
-2. Navigate to the project directory: `cd zennit`
-3. Install the dependencies: `npm install`
-4. Start the development server: `npm start`
-5. Open your web browser and go to `http://localhost:3000`
+1.  Clone the repository:
 
-__Alternatively you can simply open index.html directly from the HTML file.__
+    ```bash
+    git clone https://github.com/0xKB/zennit.git
+    ```
+2.  Open `index.html` directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
