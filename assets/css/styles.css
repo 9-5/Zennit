@@ -34,81 +34,9 @@ body {
     display: inline-block;
     width: 12ch;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    vertical-align: top;
-}
-.post-title {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-/* width */
-::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: #f1f1f100;
-  }
-
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: #888;
-  }
-
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-.inverse-colors {
-    filter: invert(100%);
-}
-.inverse-colors:hover {
-    filter: invert(85%);
-}
-.theme-switcher {
-    width: 25px;
-    height: 25px;
-}
-
-/* Amethyst Theme */
-.amethyst body {
-    background-color: #2a1b3e;
-    color: #e0d6f2;
-}
-
-.amethyst .bg-gray-900 {
-    background-color: #2a1b3e; 
-}
-
-.amethyst .text-white {
-    color: #e0d6f2; 
-}
-
-.amethyst .text-gray-400 {
-    color: #b0a1c1; 
-}
-
-.amethyst .text-blue-500 {
-  color: #4a1c6b; 
-}
-
-.amethyst .border-gray-700 {
-    border-color: #5b4a8b; 
-}
-
-.amethyst .border-gray-500 {
-    border-color: #7a6b9b; 
-}
-
-.amethyst .bg-black {
-    background-color: #3e2a6b; 
-}
-
-.amethyst .bg-opacity-50 {
-    background-color: rgba(224, 242, 254, 0.5); 
+    white-space: nowrap
+... (FILE CONTENT TRUNCATED) ...
+ackground-color: rgba(224, 242, 254, 0.5); 
 }
 
 .amethyst .bg-gray-700 {
@@ -127,31 +55,34 @@ body {
     background-color: #ffcccb; 
 }
 
-
-/* Default Dark Theme */
-body {
-    background-color: #1e1e1e;
-    color: #ffffff;
+.amethyst .bg-gray-900 {
+    background-color: #2a1b3e; 
 }
 
-/* Light Theme */
-.light-theme body {
-    background-color: #ffffff;
-    color: #000000;
+.amethyst .text-white {
+    color: #e0d6f2; 
 }
 
-.light-theme .bg-gray-900 {
-    background-color: #f3f4f6; /* light gray */
+.amethyst .text-gray-400 {
+    color: #b0a1c1; 
 }
 
-.light-theme .text-white {
-    color: #000000; /* black */
+.amethyst .text-blue-500 {
+    color: #4a1c6b; 
 }
 
-.light-theme .border-gray-700 {
-    border-color: #d1d5db; /* light gray border */
+.amethyst .border-gray-700 {
+    border-color: #5b4a8b; 
 }
 
-.light-theme .text-gray-400 {
-    color: #4b5563; /* dark gray */
+.amethyst .border-gray-500 {
+    border-color: #7a6b9b; 
+}
+
+.amethyst .bg-black {
+    background-color: #3e2a6b; 
+}
+
+.amethyst .bg-opacity-50 {
+    background-color: rgba(224, 242, 254, 0.5); 
 }

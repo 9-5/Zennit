@@ -18,39 +18,9 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage](#usage)
-
-[Screenshots](#screenshots)
-
-| Zennit on a PC | Zennit on a Mobile Device |
-|-----------|-------|
-| <img src="assets\screenshots\zennit_pc.png" alt="Zennit on a PC" width="600"> | <img src="assets\screenshots\zennit_mobile.png" alt="Zennit on a Mobile Device" width="300"> |
-
-## Features
-
--   Browse Reddit posts and comments in a clean and user-friendly interface.
--   Add new subreddits and manage your viewing experience seamlessly.
--   Interact with your favorite subreddits.
--   Mobile-first design for seamless browsing on any device.
--   Multiple viewing options
--   Multiple themes
--   PWA Implementation with offline support.
-
-## Technologies Used
-
--   React
--   Tailwind CSS
--   Reddit API
-
-## Installation
-
-To run Zennit locally, simply clone the repository and open the `index.html` file in your web browser.
-
-```bash
-git clone https://github.com/0KB/zennit
-```
-
-Alternatively, you can download the project as a ZIP file and extract it to a folder of your choice. Then, open the `index.html` directly from the HTML file.
+[Usage
+... (FILE CONTENT TRUNCATED) ...
+n directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
