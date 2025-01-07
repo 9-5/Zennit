@@ -8,8 +8,8 @@ const App = () => {
     const [loadingComments, setLoadingComments] = useState(false);
     const [afterComment, setAfterComment] = useState(null);
     const [userAfterComment, setUserAfterComment] = useState(null);
-    const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
-    const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
+    const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/0KB"}]'));
+    const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
     const [selectedPost, setSelectedPost] = useState(null);
     const [comments, setComments] = useState([]);
@@ -684,49 +684,70 @@ const App = () => {
     };
 
     const renderPostFeed = () => {
-        return (<>
-            {posts
-                .filter(post => showNSFWPosts || !post.nsfw)
-                .map((post, index) => (
-                    <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
-                        {selectedSubreddit.startsWith('user/') || selectedSubreddit.startsWith('u/') ? (
-                            <span className="text-gray-400 text-sm">{post.subreddit}</span>
-                        ) : null}
-                        {post.isCrosspost && post.crosspostData ? (
-                            <span className="text-gray-400 text-sm"> Crosspost from {post.crosspostData.subreddit_name_prefixed}</span>
-                        ) : null}
-                        <div className="flex justify-between items-center">
-                            <div className="flex-1 overflow-hidden">
-                                <span className="text-white whitespace-normal">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
+        return (
+            <>
+                {posts
+                    .filter(post => showNSFWPosts || !post.nsfw)
+                    .map((post, index) => (
+                        <div className="bg-gray-700 p-2 rounded mt-2" key={index}>
+                            {selectedSubreddit.startsWith('user/') || selectedSubreddit.startsWith('u/') ? (
+                                <span className="text-gray-400 text-sm">{post.subreddit}</span>
+                            ) : null}
+                            {post.isCrosspost && post.crosspostData ? (
+                                <span className="text-gray-400 text-sm"> Crosspost from {post.crosspostData.subreddit_name_prefixed}</span>
+                            ) : null}
+                            <div className="flex justify-between items-center">
+                                <div className="flex-1 overflow-hidden">
+                                    <span onClick={() => viewPost(post.id)} className="text-white whitespace-normal hover:cursor-pointer">{post.pinned && <i className="fas fa-thumbtack text-yellow-500 mr-2" title="Pinned"></i>}{post.nsfw && <i className="fas fa-exclamation-triangle text-red-500 mr-2" title="NSFW"></i>}{post.title.replace(/&amp;/g, '&')}</span>
+                                </div>
+                                <div className="text-gray-400 ml-4 flex-shrink-0">
+                                {!disablePostFlairs && (post.flair && <span className="flair"><strong>{post.flair}</strong></span>)}
+                                    <span className="flex items-center">
+                                        <i className="fas fa-arrow-up mr-1"></i>
+                                        {formatUpvotes(post.ups)}
+                                    </span>
+                                </div>
+                                <button 
+                                    className="ml-4 p-2 bg-gray-600 text-white rounded" 
+                                    onClick={() => {
+                                        const postElement = document.getElementById(`post-${post.id}`);
+                                        if (postElement) {
+                                            postElement.classList.toggle('expanded');
+                                        }
+                                    }}
+                                >
+                                    <i className="fas fa-chevron-down"></i>
+                                </button>
                             </div>
-                            <div className="text-gray-400 ml-4 flex-shrink-0">
-                            {!disablePostFlairs && (post.flair && <span className="flair"><strong>{post.flair}</strong></span>)}
-                                <span className="flex items-center">
-                                    <i className="fas fa-arrow-up mr-1"></i>
-                                    {formatUpvotes(post.ups)}
-                                </span>
+                            <div className="text-gray-400 text-sm mt-1 flex justify-between">
+                                <span>by {post.author}</span>
+                                <span>{formatDate(post.created_utc)}</span>
                             </div>
-                            <button className="ml-4 p-2 bg-gray-600 text-white rounded" onClick={() => viewPost(post.id)}>
-                                View Post
-                            </button>
+                            <div id={`post-${post.id}`} className="post-preview hidden">
+                                <PostPreview post={post} />
+                            </div>
                         </div>
-                        <div className="text-gray-400 text-sm mt-1 flex justify-between">
-                            <span>by {post.author}</span>
-                            <span>{formatDate(post.created_utc)}</span>
-                        </div>
+                    )
+                )}
+                {after && (
+                    <div className="text-center mt-4">
+                        <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMorePosts}>
+                            Load More Posts
+                        </button>
                     </div>
-                )
-            )}
-            {after && (
-                <div className="text-center mt-4">
-                    <button className="mt-2 w-full p-2 bg-gray-700 text-white rounded" onClick={fetchMorePosts}>
-                        Load More Posts
-                    </button>
-                </div>
-            )}
-        </>
+                )}
+            </>
         );
     };
+
+    const PostPreview = ({ post }) => {
+        return (
+            <div className="bg-gray-700 p-2 rounded mt-2">
+                {renderFormattedText(post.content.substring(0, 1000) + (post.content.length > 1000 ? '...\n## **Click the title to view the full post.**' : ''))}
+                {renderPostContent(post)}
+            </div>
+        );
+    }
 
     const renderTabSlider = () => {
         return (
@@ -1865,8 +1886,8 @@ const App = () => {
 
     const confirmClearCache = () => {
         localStorage.clear();
-        setSubreddits(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/Zennit"}]'));
-        setSelectedSubreddit(localStorage.getItem('selectedSubreddit') || 'r/Zennit');
+        setSubreddits(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/0KB"}]'));
+        setSelectedSubreddit(localStorage.getItem('selectedSubreddit') || 'r/0KB');
         setSavedPosts(JSON.parse(localStorage.getItem('savedPosts') || '[]'));
         setToastMessage('Cache cleared successfully!');
         setShowClearCachePopup(false);

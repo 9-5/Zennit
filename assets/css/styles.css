@@ -4,6 +4,13 @@ body {
     color: #ffffff;
     white-space: normal;
 }
+.post-preview {
+    display: none;
+}
+
+.post-preview.expanded {
+    display: block;
+}
 .title-container {
     max-width: 70%; 
     overflow-wrap: break-word; 
