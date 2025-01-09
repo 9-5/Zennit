@@ -14,7 +14,7 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 
-[Technologies Used](#technologies_used)
+[Technologies Used](#technologies-used)
 
 [Installation](#installation)
 
@@ -26,37 +26,30 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 ## Screenshots
 
-Include some screenshots showcasing the app's interface and features.
+Include screenshots or GIFs of your project in action to visually showcase its features and design.
 
 ## Features
 
--   Browse Reddit posts and comments in a clean and user-friendly interface.
--   Add and remove subreddits from your personal feed.
--   Sort posts by Hot, New, Top, and Rising.
--   View images and videos directly within the app.
--   Mobile-first design for seamless browsing on any device.
--   Option to save posts for later viewing.
--   Theming options.
+*   Browse Reddit posts and comments
+*   Add and remove subreddits
+*   Clean and user-friendly interface
+*   Mobile-friendly design
+*   View posts sorted by different criteria
 
 ## Technologies Used
 
--   React: A JavaScript library for building user interfaces.
--   Tailwind CSS: A utility-first CSS framework for rapid UI development.
--   Reddit API: For fetching posts and comments from Reddit.
+*   [React](https://reactjs.org/) - A JavaScript library for building user interfaces
+*   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development
 
 ## Installation
 
-To run Zennit locally, follow these steps:
+To install and run Zennit locally, follow these steps:
 
 1.  Clone the repository:
     ```bash
     git clone https://github.com/0kb-club/zennit.git
     ```
-2.  Navigate to the project directory:
-    ```bash
-    cd zennit
-    ```
-3.  Open `index.html` in your web browser. No building or installing is required, Zennit works directly from the HTML file.
+2.  Open `index.html` in your web browser. Zennit is designed to run directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
