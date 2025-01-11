@@ -18,45 +18,10 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage](#usage)
+[Usage
 
-[Contributing](#contributing)
+... (FILE CONTENT TRUNCATED) ...
 
-[License](#license)
-
-## Screenshots
-
-Include screenshots or GIFs of your project in action to visually showcase its features and design.
-
-## Features
-
-*   Browse Reddit posts and comments
-*   Add and remove subreddits
-*   Clean and user-friendly interface
-*   Mobile-friendly design
-*   View posts sorted by different criteria
-
-## Technologies Used
-
-*   [React](https://reactjs.org/) - A JavaScript library for building user interfaces
-*   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development
-
-## Installation
-
-To install and run Zennit locally, follow these steps:
-
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/0kb-club/zennit.git
-    ```
-2.  Open `index.html` in your web browser. Zennit is designed to run directly from the HTML file.
-
-**You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
-
-## Usage
-1. Open `index.html` in your web browser.
-2. Open the subreddit sidebar by clicking on the Zennit logo in the top-left corner.
-3. Add your favorite subreddits by entering `r/SubredditName` and clicking "Add".
 4. Select a subreddit by clicking on its name in the sidebar.
 5. Click on a post to view its comments.
 6. View posts sorted by different criteria, such as Hot, New, Top, and Rising.

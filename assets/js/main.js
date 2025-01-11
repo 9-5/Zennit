@@ -12,6 +12,8 @@ const App = () => {
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
 ... (FILE CONTENT TRUNCATED) ...
+                            onClose={() => setSearchPageVisible(false)} 
+                            />
                         ) : (
                             renderPostFeed()
                         )
