@@ -19,9 +19,15 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 [Installation](#installation)
 
 [Usage
-
 ... (FILE CONTENT TRUNCATED) ...
+n directly from the HTML file.
 
+**You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
+
+## Usage
+1. Open `index.html` in your web browser.
+2. Open the subreddit sidebar by clicking on the Zennit logo in the top-left corner.
+3. Add your favorite subreddits by entering `r/SubredditName` and clicking "Add".
 4. Select a subreddit by clicking on its name in the sidebar.
 5. Click on a post to view its comments.
 6. View posts sorted by different criteria, such as Hot, New, Top, and Rising.
