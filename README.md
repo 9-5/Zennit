@@ -18,9 +18,32 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage
-... (FILE CONTENT TRUNCATED) ...
-n directly from the HTML file.
+[Usage](#usage)
+
+[Contributing](#contributing)
+
+[License](#license)
+
+## Screenshots
+Include some screenshots of the application in action.
+
+## Features
+
+*   Browse Reddit posts and comments
+*   Add and remove subreddits
+*   Clean and user-friendly interface
+*   Mobile-friendly design
+*   Multiple sort options
+
+## Technologies Used
+
+*   React
+*   Tailwind CSS
+*   Reddit API
+
+## Installation
+
+To install and run Zennit locally, simply download the project and open the `index.html` file directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
