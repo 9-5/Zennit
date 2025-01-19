@@ -25,25 +25,33 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 [License](#license)
 
 ## Screenshots
-Include some screenshots of the application in action.
+
+Include some screenshots of your application here.
 
 ## Features
 
-*   Browse Reddit posts and comments
-*   Add and remove subreddits
-*   Clean and user-friendly interface
-*   Mobile-friendly design
-*   Multiple sort options
+-   Browse Reddit posts and comments.
+-   Add and remove subreddits from the sidebar.
+-   View posts sorted by different criteria (Hot, New, Top, Rising).
+-   User-friendly interface.
+-   Mobile-first design.
 
 ## Technologies Used
 
-*   React
-*   Tailwind CSS
-*   Reddit API
+-   React
+-   Tailwind CSS
+-   Reddit API
 
 ## Installation
 
-To install and run Zennit locally, simply download the project and open the `index.html` file directly from the HTML file.
+To run Zennit locally, follow these steps:
+
+1.  Clone the repository.
+2.  Open `index.html` in your web browser.
+
+__Alternatively, deploy the project to a web server of your choice.__
+
+__No API keys or environment variables are required as all the information is passed in directly from the HTML file.__
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
