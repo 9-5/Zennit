@@ -18,9 +18,35 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage
-... (FILE CONTENT TRUNCATED) ...
-n directly from the HTML file.
+[Usage](#usage)
+
+[Contributing](#contributing)
+
+[License](#license)
+
+## Screenshots
+
+Include screenshots of the application here
+
+## Features
+
+-   Browse Reddit posts and comments in a clean and user-friendly interface.
+-   Add and remove subreddits from your personalized list.
+-   View posts sorted by Hot, New, Top, and Rising.
+-   Dark and Light theme.
+
+## Technologies Used
+
+-   React
+-   Tailwind CSS
+-   Reddit API
+
+## Installation
+
+1.  Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
+2.  Open the project directory: `cd zennit`
+
+**You can launch Zennit directly from the HTML file.**
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 

@@ -35,54 +35,304 @@ body {
     width: 12ch;
     overflow: hidden;
     white-space: nowrap
-... (FILE CONTENT TRUNCATED) ...
-ackground-color: rgba(224, 242, 254, 0.5); 
+}
+.comment {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
 }
 
-.amethyst .bg-gray-700 {
-    background-color: #3e2a6b; 
+.comment-body {
+    margin-top: 5px;
+}
+#scrollableDiv {
+    overflow-y: auto;
+    height: 80vh;
+}
+.post-container {
+    width: 100%;
+    border-bottom: 1px solid #4b5563;
+    padding: 15px 0;
 }
 
-.amethyst .bg-gray-600 {
-    background-color: #5b4a8b; 
+.post-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #ffffff;
+    margin-bottom: 5px;
 }
 
-.amethyst .bg-gray-800 {
-    background-color: #7a6b9b; 
+.post-info {
+    font-size: 0.875rem;
+    color: #9ca3af;
 }
 
-.amethyst .bg-red-600 {
-    background-color: #ffcccb; 
+.post-thumbnail {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-top: 10px;
 }
 
-.amethyst .bg-gray-900 {
-    background-color: #2a1b3e; 
+.post-actions {
+    margin-top: 10px;
 }
 
-.amethyst .text-white {
-    color: #e0d6f2; 
+.post-actions button {
+    background-color: #374151;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
 }
 
-.amethyst .text-gray-400 {
-    color: #b0a1c1; 
+.post-actions button:hover {
+    background-color: #4b5563;
+}
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #1f2937;
+    color: #ffffff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    padding-top: 20px;
 }
 
-.amethyst .text-blue-500 {
-    color: #4a1c6b; 
+.sidebar a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 18px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
 }
 
-.amethyst .border-gray-700 {
-    border-color: #5b4a8b; 
+.sidebar a:hover {
+    color: #f1f1f1;
 }
 
-.amethyst .border-gray-500 {
-    border-color: #7a6b9b; 
+.sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
 }
 
-.amethyst .bg-black {
-    background-color: #3e2a6b; 
+.openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #111;
+    color: white;
+    padding: 10px 15px;
+    border: none;
 }
 
-.amethyst .bg-opacity-50 {
-    background-color: rgba(224, 242, 254, 0.5); 
+#main {
+    transition: margin-left .5s;
+    padding: 16px;
 }
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidebar {padding-top: 15px;}
+    .sidebar a {font-size: 18px;}
+}
+.subreddit-input {
+    margin: 10px;
+}
+
+.subreddit-input input {
+    padding: 8px;
+    border: 1px solid #4b5563;
+    background-color: #374151;
+    color: #ffffff;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.subreddit-input button {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+    width: 100%;
+}
+
+.subreddit-input button:hover {
+    background-color: #3b82f6;
+}
+.subreddit-list {
+    padding: 0;
+    margin: 10px;
+    list-style: none;
+}
+
+.subreddit-list li {
+    padding: 8px;
+    border-bottom: 1px solid #4b5563;
+    cursor: pointer;
+}
+
+.subreddit-list li:hover {
+    background-color: #374151;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+  }
+
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+  }
+  .settings-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #374151;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.settings-button:hover {
+    background-color: #4b5563;
+}
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-inner {
+    background-color: #1f2937;
+    color: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 500px;
+}
+
+.popup-inner h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.popup-inner button {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.popup-inner button:hover {
+    background-color: #3b82f6;
+}
+.search-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.search-results {
+    list-style: none;
+    padding: 0;
+}
+
+.search-results li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.search-results li:hover {
+    background-color: #f5f5f5;
+}
+.enlarged-image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.enlarged-image-container {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.enlarged-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+/* Default theme */
+body {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+/* Specific theme overrides */
+.amethyst body {
+    background-color: #2a1b3e;
+    color: #e0d6f2;
+}
+
+.amethyst .bg-gray-200 {
+    background-color: #d1c4e9;
+}
+
+.amethyst .bg-gray-100 {
+    b
