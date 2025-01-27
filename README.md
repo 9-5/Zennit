@@ -26,14 +26,17 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 ## Screenshots
 
-Include screenshots of the application here
+Include screenshots of the application here.
 
 ## Features
 
--   Browse Reddit posts and comments in a clean and user-friendly interface.
--   Add and remove subreddits from your personalized list.
--   View posts sorted by Hot, New, Top, and Rising.
--   Dark and Light theme.
+-   Browse Reddit posts and comments.
+-   Add and remove subreddits from the sidebar.
+-   View posts sorted by different criteria (Hot, New, Top, Rising).
+-   Clean and user-friendly interface.
+-   Mobile-first design.
+-   PWA Compatibility
+-   Theme support
 
 ## Technologies Used
 
@@ -43,10 +46,14 @@ Include screenshots of the application here
 
 ## Installation
 
-1.  Clone the repository: `git clone https://github.com/0kb-club/zennit.git`
-2.  Open the project directory: `cd zennit`
+To run Zennit locally, follow these steps:
 
-**You can launch Zennit directly from the HTML file.**
+1.  Clone the repository: `git clone https://github.com/0KB/zennit.git`
+2.  Navigate to the project directory: `cd zennit`
+3.  Open `index.html` in your web browser.
+    *   Alternatively, open with VS Code using Live Server or other local web server to avoid CORS issues.
+
+__Zennit is intended to be run directly from the HTML file.__
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
