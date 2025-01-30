@@ -18,42 +18,9 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Installation](#installation)
 
-[Usage](#usage)
-
-[Contributing](#contributing)
-
-[License](#license)
-
-## Screenshots
-
-Include screenshots of the application here.
-
-## Features
-
--   Browse Reddit posts and comments.
--   Add and remove subreddits from the sidebar.
--   View posts sorted by different criteria (Hot, New, Top, Rising).
--   Clean and user-friendly interface.
--   Mobile-first design.
--   PWA Compatibility
--   Theme support
-
-## Technologies Used
-
--   React
--   Tailwind CSS
--   Reddit API
-
-## Installation
-
-To run Zennit locally, follow these steps:
-
-1.  Clone the repository: `git clone https://github.com/0KB/zennit.git`
-2.  Navigate to the project directory: `cd zennit`
-3.  Open `index.html` in your web browser.
-    *   Alternatively, open with VS Code using Live Server or other local web server to avoid CORS issues.
-
-__Zennit is intended to be run directly from the HTML file.__
+[Usage
+... (FILE CONTENT TRUNCATED) ...
+n directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
@@ -67,16 +34,3 @@ __Zennit is intended to be run directly from the HTML file.__
 7. Enjoy a clean and user-friendly interface for browsing Reddit posts and comments.
 
 __Subreddits can be removed in the sidebar by right-clicking on the subreddit name or long-pressing on the subreddit name.__
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute to Zennit, please follow these steps:
-
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and commit them with clear, concise messages.
-4.  Submit a pull request.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).

@@ -12,3 +12,23 @@ const App = () => {
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
 ... (FILE CONTENT TRUNCATED) ...
+                    onClose={() => setSearchPageVisible(false)} 
+                            />
+                        ) : (
+                            renderPostFeed()
+                        )
+                    )}
+                </div>
+                {enlargedImage && (renderEnlargedPostImages())}
+                {enlargedCommentImage && (renderEnlargedCommentImages())}
+            </div>
+            {showErrorPopup && renderErrorPopup()}
+            {showDeletePopup && (renderDeleteSavedPostPopup())}
+            {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+        </div>
+    )
+}
+
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+root.render(<App />);
