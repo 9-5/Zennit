@@ -10,7 +10,7 @@ const App = () => {
     const [userAfterComment, setUserAfterComment] = useState(null);
     const [subreddits, setSubreddits] = useState(() => JSON.parse(localStorage.getItem('subreddits') || '[{"name": "r/0KB"}]'));
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
-    const [posts, setPosts] = useState([]);
+    const [posts, s
 ... (FILE CONTENT TRUNCATED) ...
                     onClose={() => setSearchPageVisible(false)} 
                             />

@@ -36,11 +36,7 @@ body {
     overflow: hidden;
     white-space: nowrap
 ... (FILE CONTENT TRUNCATED) ...
-    background-color: #3e2a6b; 
-}
-
-.amethyst .bg-opacity-50 {
-    background-color: rgba(224, 242, 254, 0.5); 
+ackground-color: rgba(224, 242, 254, 0.5); 
 }
 
 .amethyst .bg-gray-700 {
