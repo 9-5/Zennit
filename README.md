@@ -14,7 +14,7 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 
-[Technologies Used](#technologies_used)
+[Technologies Used](#technologies-used)
 
 [Installation](#installation)
 
@@ -26,42 +26,28 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 ## Screenshots
 
-Include screenshots of the application in action.
+[Add screenshots here]
 
 ## Features
 
-List the main features of the application:
-
-*   Browse Reddit posts and comments
-*   Add new subreddits
-*   Remove subreddits
-*   Clean and user-friendly interface
-*   Mobile-first design
-*   __Dark mode support__
-*   Sort posts by Hot, New, Top, and Rising
-*   View media posts (images, videos)
+-   Browse Reddit posts and comments
+-   Add new subreddits
+-   Remove subreddits
+-   View posts sorted by different criteria (Hot, New, Top, Rising)
+-   User-friendly interface
 
 ## Technologies Used
 
-*   React
-*   Tailwind CSS
-*   Reddit API
+-   React
+-   Tailwind CSS
 
 ## Installation
 
 To run Zennit locally, follow these steps:
 
-1.  Clone the repository:
-
-    ```bash
-    git clone https://github.com/0kb-club/zennit.git
-    ```
-2.  Navigate to the project directory:
-
-    ```bash
-    cd zennit
-    ```
-3.  You do not need to install any dependencies. The project is designed to run directly from the HTML file.
+1.  Clone the repository: `git clone [repository_url]`
+2.  Navigate to the project directory: `cd zennit`
+3.  Open `index.html` in your web browser, or serve the files using a local web server. For example, using Python: `python -m http.server` from the project's root directory and navigating to `http://localhost:8000` in your browser.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 

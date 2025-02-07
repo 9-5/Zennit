@@ -12,34 +12,18 @@ const App = () => {
     const [selectedSubreddit, setSelectedSubreddit] = useState(localStorage.getItem('selectedSubreddit') || 'r/0KB');
     const [posts, setPosts] = useState([]);
     const [comments, setComments] = useState([]);
-    const [selectedPostId, setSelectedPostId] = useState(null);
+    const [userComments, setUserComments] = useState([]);
+    const [savedPosts, setSavedPosts] = useState(() => JSON.parse(localStorage.getItem('savedPosts') || '[]'));
+    const [showSidebar, setShowSidebar] = useState(false);
+    const [showSearchPage, setSearchPageVisible] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState(null);
     const [enlargedCommentImage, setEnlargedCommentImage] = useState(null);
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchPageVisible, setSearchPageVisible] = useState(false);
-    const [savedPosts, setSavedPosts] = useState(() => JSON.parse(localStorage.getItem('savedPosts') || '[]'));
-	const [showDeletePopup, setShowDeletePopup] = useState(false);
-	const [postToDelete, setPostToDelete] = useState(null);
+    const [showDeletePopup, setShowDeletePopup] = useState(false);
+    const [postToDelete, setPostToDelete] = useState(null);
     const [toastMessage, setToastMessage] = useState('');
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true' || false);
-
-    useEffect(() => {
-        localStorage.setItem('darkMode', darkMode);
-        if (darkMode) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-    }, [darkMode]);
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.className = savedTheme;
-        }
-    }, []);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     useEffect(() => {
         localStorage.setItem('subreddits', JSON.stringify(subreddits));
@@ -54,77 +38,149 @@ const App = () => {
     }, [savedPosts]);
 
     useEffect(() => {
-        const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-        setSavedPosts(savedPosts);
-    }, []);
+        if (toastMessage) {
+            const timer = setTimeout(() => {
+                setToastMessage('');
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     useEffect(() => {
-        if (selectedSubreddit) {
-            setLoadingPosts(true);
-            fetchPosts(selectedSubreddit);
-        }
+        loadPosts();
+        loadSavedPosts();
     }, [selectedSubreddit]);
 
-    const addSubreddit = (newSubreddit) => {
-        if (newSubreddit && !subreddits.find(sub => sub.name === newSubreddit)) {
-            setSubreddits([...subreddits, { name: newSubreddit }]);
+    useEffect(() => {
+        if (posts.length === 0 && loadingPosts) {
+            setErrorMessage("Content Blocker Detected. Please disable your content blocker to use Zennit.");
+            setShowErrorPopup(true);
+            setContentBlockerDetected(true);
+        } else if (posts.length > 0 && contentBlockerDetected) {
+            setShowErrorPopup(false);
+            setErrorMessage("");
+            setContentBlockerDetected(false);
         }
+    }, [posts, loadingPosts, contentBlockerDetected]);
+
+    useEffect(() => {
+        const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = 'assets/favicon/favicon.ico';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    }, []);
+
+    const handleImageClick = (imageUrl) => {
+        setEnlargedImage(imageUrl);
     };
 
-    const removeSubreddit = (subredditToRemove) => {
-        const updatedSubreddits = subreddits.filter(sub => sub.name !== subredditToRemove);
+    const handleCommentImageClick = (imageUrl) => {
+        setEnlargedCommentImage(imageUrl);
+    };
+
+    const renderEnlargedPostImages = () => {
+        return (
+            <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 z-50 flex justify-center items-center" onClick={() => setEnlargedImage(null)}>
+                <img src={enlargedImage} alt="Enlarged Post Image" className="max-w-4/5 max-h-4/5 object-contain" />
+            </div>
+        );
+    };
+
+    const renderEnlargedCommentImages = () => {
+        return (
+            <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 z-50 flex justify-center items-center" onClick={() => setEnlargedCommentImage(null)}>
+                <img src={enlargedCommentImage} alt="Enlarged Comment Image" className="max-w-4/5 max-h-4/5 object-contain" />
+            </div>
+        );
+    };
+
+    const addSubreddit = (subredditName) => {
+        if (!subredditName.startsWith('r/')) {
+            setErrorMessage('Subreddit names must start with "r/"');
+            setShowErrorPopup(true);
+            return;
+        }
+        if (subreddits.find(sub => sub.name === subredditName)) {
+             setErrorMessage('Subreddit already exists.');
+             setShowErrorPopup(true);
+             return;
+        }
+
+        setSubreddits([...subreddits, { name: subredditName }]);
+        setSelectedSubreddit(subredditName);
+    };
+
+    const removeSubreddit = (subredditName) => {
+        const updatedSubreddits = subreddits.filter(sub => sub.name !== subredditName);
         setSubreddits(updatedSubreddits);
-        if (selectedSubreddit === subredditToRemove) {
-            setSelectedSubreddit(updatedSubreddits.length > 0 ? updatedSubreddits[0].name : 'r/0KB');
+        if (selectedSubreddit === subredditName && updatedSubreddits.length > 0) {
+            setSelectedSubreddit(updatedSubreddits[0].name);
+        } else if (updatedSubreddits.length === 0) {
+            setSelectedSubreddit('r/0KB');
+            setSubreddits([{ name: 'r/0KB' }]);
         }
     };
 
-    const fetchPosts = async (subreddit, afterParam = null) => {
+    const loadPosts = async (loadMore = false) => {
+        if (!loadMore) {
+            setPosts([]);
+            setAfter(null);
+        }
         setLoadingPosts(true);
         try {
-            const url = `https://www.reddit.com/${subreddit}/hot.json?limit=10${afterParam ? `&after=${afterParam}` : ''}`;
+            let url = `https://www.reddit.com/${selectedSubreddit}/hot.json?limit=10`;
+            if (after && loadMore) {
+                url += `&after=${after}`;
+            }
             const response = await fetch(url);
             const data = await response.json();
-
-            if (data.error) {
-                setErrorMessage(`Failed to fetch posts from ${subreddit}: ${data.message}`);
-                setShowErrorPopup(true);
-                setLoadingPosts(false);
-                return;
+            if (data.data && data.data.children) {
+                const newPosts = data.data.children.map(post => ({
+                    id: post.data.id,
+                    title: post.data.title,
+                    author: post.data.author,
+                    score: post.data.score,
+                    num_comments: post.data.num_comments,
+                    thumbnail: post.data.thumbnail,
+                    url: post.data.url,
+                    permalink: post.data.permalink,
+                    created_utc: post.data.created_utc,
+                    selftext: post.data.selftext,
+                    post_hint: post.data.post_hint,
+                    preview: post.data.preview,
+                    is_gallery: post.data.is_gallery,
+                    media_metadata: post.data.media_metadata,
+                    gallery_data: post.data.gallery_data,
+                    flair: post.data.link_flair_text
+                }));
+                setPosts(prevPosts => [...prevPosts, ...newPosts]);
+                setAfter(data.data.after);
+            } else {
+                console.error("Error loading posts:", data);
             }
-
-            const newPosts = data.data.children.map(post => post.data);
-            setPosts(prevPosts => afterParam ? [...prevPosts, ...newPosts] : newPosts);
-            setAfter(data.data.after);
-            setContentBlockerDetected(false);
         } catch (error) {
-            setContentBlockerDetected(true);
-            console.error("Content Blocker Detected or Error fetching posts:", error);
+            console.error("Error fetching posts:", error);
         } finally {
             setLoadingPosts(false);
         }
     };
 
-    const fetchComments = async (postId, afterParam = null, isUserComments = false) => {
+    const loadComments = async (postId) => {
         setLoadingComments(true);
         try {
-            const url = `https://www.reddit.com/comments/${postId}.json?depth=1&limit=10${afterParam ? `&after=${afterParam}` : ''}`;
-            const response = await fetch(url);
+            const response = await fetch(`https://www.reddit.com/r/0KB/comments/${postId}.json`);
             const data = await response.json();
-
-            if (Array.isArray(data) && data.length > 1 && data[1].data && data[1].data.children) {
-                const newComments = data[1].data.children
-                    .filter(comment => comment.kind === 't1')
-                    .map(comment => comment.data);
-
-                setComments(prevComments => afterParam ? [...prevComments, ...newComments] : newComments);
-                if (isUserComments) {
-                    setUserAfterComment(data[1].data.after);
-                } else {
-                    setAfterComment(data[1].data.after);
-                }
-            } else {
-                console.error("Unexpected comments data structure:", data);
+            if (data && data[1] && data[1].data && data[1].data.children) {
+                setComments(data[1].data.children.map(comment => ({
+                    id: comment.data.id,
+                    author: comment.data.author,
+                    body: comment.data.body,
+                    replies: comment.data.replies,
+                    created_utc: comment.data.created_utc,
+                    permalink: comment.data.permalink,
+                    body_html: comment.data.body_html
+                })));
             }
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -133,334 +189,401 @@ const App = () => {
         }
     };
 
-    const handlePostClick = (postId) => {
-        setSelectedPostId(postId);
-        setComments([]);
-        setAfterComment(null);
-        fetchComments(postId);
-    };
-
-    const handleLoadMorePosts = () => {
-        if (after) {
-            fetchPosts(selectedSubreddit, after);
+     const loadUserComments = async (username, loadMore = false) => {
+        if (!loadMore) {
+            setUserComments([]);
+            setUserAfterComment(null);
+        }
+        setLoadingComments(true);
+        try {
+            let url = `https://www.reddit.com/user/${username}/comments.json?limit=10`;
+            if (userAfterComment && loadMore) {
+                url += `&after=${userAfterComment}`;
+            }
+            const response = await fetch(url);
+            const data = await response.json();
+             if (data && data.data && data.data.children) {
+                const newUserComments = data.data.children.map(comment => ({
+                    id: comment.data.id,
+                    author: comment.data.author,
+                    body: comment.data.body,
+                    replies: comment.data.replies,
+                    created_utc: comment.data.created_utc,
+                    permalink: comment.data.permalink,
+                    body_html: comment.data.body_html,
+                    subreddit_name_prefixed: comment.data.subreddit_name_prefixed,
+                    link_title: comment.data.link_title
+                }));
+                setUserComments(prevComments => [...prevComments, ...newUserComments]);
+                setUserAfterComment(data.data.after);
+            } else {
+                console.error("Error loading user comments:", data);
+            }
+        } catch (error) {
+            console.error("Error fetching comments:", error);
+        } finally {
+            setLoadingComments(false);
         }
     };
 
-    const handleLoadMoreComments = () => {
-        if (afterComment) {
-            fetchComments(selectedPostId, afterComment);
+    const savePost = (post) => {
+        setSavedPosts(prevSavedPosts => {
+            const isPostSaved = prevSavedPosts.some(savedPost => savedPost.id === post.id);
+            if (isPostSaved) {
+                return prevSavedPosts;
+            } else {
+                return [...prevSavedPosts, post];
+            }
+        });
+        setToastMessage('Post saved!');
+    };
+
+    const loadSavedPosts = () => {
+        try {
+            const savedPostsData = localStorage.getItem('savedPosts');
+            if (savedPostsData) {
+                setSavedPosts(JSON.parse(savedPostsData));
+            }
+        } catch (error) {
+            console.error("Error loading saved posts from localStorage:", error);
         }
     };
 
-    const handleImageClick = (imageUrl) => {
-        setEnlargedImage(imageUrl);
-    };
-
-    const handleCloseEnlargedImage = () => {
-        setEnlargedImage(null);
-    };
-
-    const handleCommentImageClick = (imageUrl) => {
-        setEnlargedCommentImage(imageUrl);
-    };
-
-    const handleCloseEnlargedCommentImage = () => {
-        setEnlargedCommentImage(null);
-    };
-
-    const handleSearch = () => {
-        if (searchQuery) {
-            setSearchPageVisible(true);
-        }
-    };
-
-    const handleSavePost = (post) => {
-        const isPostSaved = savedPosts.some(savedPost => savedPost.id === post.id);
-        if (isPostSaved) {
-            const updatedSavedPosts = savedPosts.filter(savedPost => savedPost.id !== post.id);
-            setSavedPosts(updatedSavedPosts);
-            setToastMessage('Post unsaved!');
-        } else {
-            setSavedPosts([...savedPosts, post]);
-            setToastMessage('Post saved!');
-        }
-    };
-	
-	const handleDeleteSavedPost = (post) => {
-        setPostToDelete(post);
+    const deleteSavedPost = (postId) => {
+        setPostToDelete(postId);
         setShowDeletePopup(true);
     };
 
     const confirmDeletePost = () => {
-        if (postToDelete) {
-            const updatedSavedPosts = savedPosts.filter(savedPost => savedPost.id !== postToDelete.id);
-            setSavedPosts(updatedSavedPosts);
-            localStorage.setItem('savedPosts', JSON.stringify(updatedSavedPosts));
-            setToastMessage('Post deleted!');
-        }
-        closeDeletePopup();
+        setSavedPosts(prevSavedPosts => prevSavedPosts.filter(post => post.id !== postToDelete));
+        setShowDeletePopup(false);
+        setToastMessage('Post deleted!');
     };
 
-    const closeDeletePopup = () => {
+    const cancelDeletePost = () => {
         setShowDeletePopup(false);
         setPostToDelete(null);
     };
 
-    const isPostSaved = (postId) => {
-        return savedPosts.some(savedPost => savedPost.id === postId);
+    const toggleSidebar = () => {
+        setShowSidebar(!showSidebar);
     };
-    
-    const renderPost = (post) => (
-        <div key={post.id} className="bg-white rounded-lg shadow-md p-4 mb-4">
-            <div className="flex items-center mb-2">
-                <a href={`https://www.reddit.com/${post.subreddit_name_prefixed}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline mr-2">
-                    {post.subreddit_name_prefixed}
-                </a>
-                <span className="text-gray-700">
-                    <a href={`https://www.reddit.com/user/${post.author}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                        u/{post.author}
-                    </a>
-                </span>
-            </div>
-            <h2 className="text-xl font-semibold mb-2 post-title">
-                <a href={post.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {post.title}
-                </a>
-            </h2>
-            {post.post_hint === 'image' && (
-                <img 
-                    src={post.url} 
-                    alt={post.title} 
-                    className="mb-2 rounded-lg cursor-pointer"
-                    onClick={() => handleImageClick(post.url)}
-                />
-            )}
-            {post.post_hint === 'rich:video' && post.media && post.media.reddit_video && (
-                <video controls className="mb-2 rounded-lg w-full">
-                    <source src={post.media.reddit_video.fallback_url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                </video>
-            )}
-            {post.thumbnail && post.post_hint !== 'image' && post.post_hint !== 'rich:video' && (
-                <img 
-                    src={post.thumbnail} 
-                    alt={post.title} 
-                    className="mb-2 rounded-lg" 
-                />
-            )}
-            <div className="flex items-center text-gray-500">
-                <span className="mr-2">Score: {post.score}</span>
-                <a href={`https://www.reddit.com${post.permalink}`} target="_blank" rel="noopener noreferrer" className="hover:underline mr-2">
-                    Comments: {post.num_comments}
-                </a>
-                <span className="mr-2">
-                    <button onClick={() => handleSavePost(post)} className="text-blue-500 hover:underline">
-                        {isPostSaved(post.id) ? 'Unsave' : 'Save'}
-                    </button>
-                </span>
-                <span className="text-gray-500">
-                    <a href={`https://www.reddit.com${post.permalink}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                        {new Date(post.created_utc * 1000).toLocaleString()}
-                    </a>
-                </span>
-            </div>
-        </div>
-    );
 
-    const renderPostFeed = () => (
-        <div>
-            {posts.map(post => (
-                renderPost(post)
-            ))}
-            {loadingPosts && <p>Loading more posts...</p>}
-            {!loadingPosts && after && (
-                <button onClick={handleLoadMorePosts} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Load More Posts
-                </button>
-            )}
-        </div>
-    );
-
-    const renderEnlargedPostImages = () => (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex justify-center items-center z-50" onClick={handleCloseEnlargedImage}>
-            <img src={enlargedImage} alt="Enlarged Post" className="max-w-full max-h-full" />
-            <button className="absolute top-4 right-4 text-white text-2xl" onClick={handleCloseEnlargedImage}>
-                Close
-            </button>
-        </div>
-    );
-
-    const renderEnlargedCommentImages = () => (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex justify-center items-center z-50" onClick={handleCloseEnlargedCommentImage}>
-            <img src={enlargedCommentImage} alt="Enlarged Comment" className="max-w-full max-h-full" />
-            <button className="absolute top-4 right-4 text-white text-2xl" onClick={handleCloseEnlargedCommentImage}>
-                Close
-            </button>
-        </div>
-    );
-
-    const renderErrorPopup = () => (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-4 rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Error</h2>
-                <p>{errorMessage}</p>
-                <button onClick={() => setShowErrorPopup(false)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4">
-                    Close
-                </button>
-            </div>
-        </div>
-    );
-
-    const renderDeleteSavedPostPopup = () => (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-4 rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Delete Post</h2>
-                <p>Are you sure you want to delete this post?</p>
-                <div className="flex justify-end mt-4">
-                    <button onClick={closeDeletePopup} className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
-                        Cancel
-                    </button>
-                    <button onClick={confirmDeletePost} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-    const Toast = ({ message, onClose }) => {
-        useEffect(() => {
-            const timer = setTimeout(() => {
-                onClose();
-            }, 3000);
-            return () => clearTimeout(timer);
-        }, [onClose]);
-
+    const renderPost = (post) => {
+        const isSaved = savedPosts.some(savedPost => savedPost.id === post.id);
         return (
-            <div className="fixed bottom-4 right-4 bg-green-500 text-white py-2 px-4 rounded-full shadow-lg">
-                {message}
-                <button onClick={onClose} className="ml-2 focus:outline-none">
-                    <i className="fas fa-times"></i>
-                </button>
+            <div key={post.id} className="mb-4 p-4 rounded-md shadow-md bg-gray-800 relative">
+                {post.flair && (
+                    <div className="flair absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                        {post.flair}
+                    </div>
+                )}
+                <div className="title-container">
+                    <a href={post.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
+                    </a>
+                </div>
+                <p className="text-gray-400 mb-2">
+                    Posted by <a href={`https://www.reddit.com/user/${post.author}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{post.author}</a>
+                </p>
+                {post.post_hint === 'image' && (
+                    <div className="mb-2">
+                        <img src={post.url} alt={post.title} className="max-w-full h-auto rounded-md cursor-pointer" onClick={() => handleImageClick(post.url)} />
+                    </div>
+                )}
+                {post.is_gallery && post.media_metadata && (
+                    <div className="flex overflow-x-auto mb-2">
+                        {Object.values(post.media_metadata).map((item) => (
+                            <img
+                                key={item.id}
+                                src={`https://i.redd.it/${item.id}.${item.m.split('/')[1]}`}
+                                alt={post.title}
+                                className="max-w-full h-auto rounded-md mr-2 cursor-pointer"
+                                onClick={() => handleImageClick(`https://i.redd.it/${item.id}.${item.m.split('/')[1]}`)}
+                            />
+                        ))}
+                    </div>
+                )}
+                {post.selftext && (
+                    <div className="body-text">
+                        {post.selftext}
+                    </div>
+                )}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <span className="mr-2">Score: {post.score}</span>
+                        <span className="mr-2">Comments: {post.num_comments}</span>
+                    </div>
+                     <div>
+                        <button onClick={() => loadComments(post.id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+                            View Comments
+                        </button>
+                        {!isSaved ? (
+                            <button onClick={() => savePost(post)} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                Save Post
+                            </button>
+                        ) : (
+                            <button onClick={() => deleteSavedPost(post.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                Delete Post
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <PostComments comments={comments} loadingComments={loadingComments} handleCommentImageClick={handleCommentImageClick} />
             </div>
         );
     };
 
-    return (
-        <div className={darkMode ? 'dark-mode' : ''}>
-            <div className="flex h-screen">
-                <div className="w-64 bg-gray-200 p-4 subreddit-sidebar">
-                    <img src="assets/zennit-logo.png" alt="Zennit Logo" className="mb-4 cursor-pointer" onClick={() => { setSearchPageVisible(false); setSelectedPostId(null); }} />
-                    <h2 className="text-xl font-semibold mb-2">Subreddits</h2>
-                    <ul>
-                        {subreddits.map(subreddit => (
-                            <li key={subreddit.name} className="mb-2">
-                                <a
-                                    href="#"
-                                    className={selectedSubreddit === subreddit.name ? "text-blue-500" : "text-gray-700 hover:text-blue-500"}
-                                    onClick={() => {
-                                        setSelectedSubreddit(subreddit.name);
-                                        setSearchPageVisible(false);
-                                        setSelectedPostId(null);
-                                    }}
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        removeSubreddit(subreddit.name);
-                                    }}
-                                    onTouchStart={(e) => {
-                                        //Long press detection for mobile devices
-                                        let touchTimer;
-                                        const touchDuration = 1000;
-
-                                        const handleTouchStart = () => {
-                                            touchTimer = setTimeout(() => {
-                                                removeSubreddit(subreddit.name);
-                                            }, touchDuration);
-                                        };
-
-                                        const handleTouchEnd = () => {
-                                            clearTimeout(touchTimer);
-                                        };
-
-                                        handleTouchStart();
-
-                                        e.target.addEventListener('touchend', handleTouchEnd, { once: true });
-                                        e.target.addEventListener('touchcancel', handleTouchEnd, { once: true });
-                                    }}
-                                >
-                                    {subreddit.name}
-                                </a>
-                            </li>
+    const renderSavedPost = (post) => {
+        return (
+            <div key={post.id} className="mb-4 p-4 rounded-md shadow-md bg-gray-800 relative">
+                {post.flair && (
+                    <div className="flair absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                        {post.flair}
+                    </div>
+                )}
+                <div className="title-container">
+                    <a href={post.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
+                    </a>
+                </div>
+                <p className="text-gray-400 mb-2">
+                    Posted by <a href={`https://www.reddit.com/user/${post.author}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{post.author}</a>
+                </p>
+                {post.post_hint === 'image' && (
+                    <div className="mb-2">
+                        <img src={post.url} alt={post.title} className="max-w-full h-auto rounded-md cursor-pointer" onClick={() => handleImageClick(post.url)} />
+                    </div>
+                )}
+                {post.is_gallery && post.media_metadata && (
+                    <div className="flex overflow-x-auto mb-2">
+                        {Object.values(post.media_metadata).map((item) => (
+                            <img
+                                key={item.id}
+                                src={`https://i.redd.it/${item.id}.${item.m.split('/')[1]}`}
+                                alt={post.title}
+                                className="max-w-full h-auto rounded-md mr-2 cursor-pointer"
+                                onClick={() => handleImageClick(`https://i.redd.it/${item.id}.${item.m.split('/')[1]}`)}
+                            />
                         ))}
-                    </ul>
-                    <div className="mt-4">
-                        <input
-                            type="text"
-                            placeholder="r/subreddit"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    addSubreddit(e.target.value);
-                                    e.target.value = '';
-                                }
-                            }}
-                        />
-                        <button
-                            onClick={(e) => {
-                                const input = e.target.previousElementSibling;
-                                addSubreddit(input.value);
-                                input.value = '';
-                            }}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
-                        >
-                            Add
+                    </div>
+                )}
+                {post.selftext && (
+                    <div className="body-text">
+                        {post.selftext}
+                    </div>
+                )}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <span className="mr-2">Score: {post.score}</span>
+                        <span className="mr-2">Comments: {post.num_comments}</span>
+                    </div>
+                     <div>
+                        <button onClick={() => loadComments(post.id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+                            View Comments
+                        </button>
+                        <button onClick={() => deleteSavedPost(post.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Delete Post
                         </button>
                     </div>
-                    <button
-                        onClick={() => setDarkMode(!darkMode)}
-                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4 w-full"
-                    >
-                        {darkMode ? 'Light Mode' : 'Dark Mode'}
+                </div>
+                <PostComments comments={comments} loadingComments={loadingComments} handleCommentImageClick={handleCommentImageClick} />
+            </div>
+        );
+    };
+
+    const renderComment = (comment) => {
+        if (!comment || !comment.data) {
+            return null;
+        }
+
+        const commentData = comment.data;
+
+        return (
+            <div key={commentData.id} className="mb-4 p-4 rounded-md shadow-md bg-gray-700">
+                <p className="text-gray-400">
+                    <a href={`https://www.reddit.com/user/${commentData.author}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        {commentData.author}
+                    </a>
+                </p>
+                <div className="body-text">
+                   {commentData.body}
+                </div>
+            </div>
+        );
+    };
+
+    const renderUserComment = (comment) => {
+        return (
+            <div key={comment.id} className="mb-4 p-4 rounded-md shadow-md bg-gray-700">
+                <p className="text-gray-400">
+                    <a href={`https://www.reddit.com/${comment.subreddit_name_prefixed}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        {comment.subreddit_name_prefixed}
+                    </a> - <a href={`https://www.reddit.com/r/0KB/comments/${comment.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        {comment.link_title}
+                    </a>
+                </p>
+                <div className="body-text">
+                   {comment.body}
+                </div>
+            </div>
+        );
+    };
+
+    const renderPostFeed = () => {
+        return (
+            <div>
+                {posts.map(post => renderPost(post))}
+                {loadingPosts && <p className="text-center">Loading more posts...</p>}
+                {!loadingPosts && after && (
+                    <button onClick={() => loadPosts(true)} className="block mx-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Load More
+                    </button>
+                )}
+            </div>
+        );
+    };
+
+    const renderSavedPostFeed = () => {
+         return (
+            <div>
+                {savedPosts.map(post => renderSavedPost(post))}
+                {savedPosts.length === 0 && <p className="text-center">No saved posts yet.</p>}
+            </div>
+        );
+    };
+
+    const renderCommentFeed = () => {
+        return (
+            <div>
+                {comments.map(comment => renderComment({ data: comment }))}
+                {loadingComments && <p className="text-center">Loading comments...</p>}
+            </div>
+        );
+    };
+
+    const renderUserCommentFeed = (username) => {
+        return (
+            <div>
+                {userComments.map(comment => renderUserComment(comment))}
+                {loadingComments && <p className="text-center">Loading comments...</p>}
+                {!loadingComments && userAfterComment && (
+                    <button onClick={() => loadUserComments(username, true)} className="block mx-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Load More
+                    </button>
+                )}
+            </div>
+        );
+    };
+
+    const renderErrorPopup = () => {
+        return (
+            <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex justify-center items-center">
+                <div className="bg-gray-900 p-8 rounded-md shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">Error</h2>
+                    <p>{errorMessage}</p>
+                    <button onClick={() => setShowErrorPopup(false)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
+                        Close
                     </button>
                 </div>
-                <div className="flex-1 p-4">
-                    {selectedPostId ? (
-                        <CommentSection
-                            postId={selectedPostId}
-                            comments={comments}
-                            loadingComments={loadingComments}
-                            loadMoreComments={handleLoadMoreComments}
-                            handleCommentImageClick={handleCommentImageClick}
-                        />
-                    ) : (
-                        searchPageVisible ? (
-                            <SearchPage
-                                searchQuery={searchQuery}
-                                setSearchQuery={setSearchQuery}
-                                posts={posts}
-                                renderPost={renderPost}
-                                handleImageClick={handleImageClick}
-                                isPostSaved={isPostSaved}
-                                handleSavePost={handleSavePost}
-                                setShowDeletePopup={setShowDeletePopup}
-                                setPostToDelete={setPostToDelete}
-                                onClose={() => setSearchPageVisible(false)} 
-                            />
-                        ) : (
-                            renderPostFeed()
-                        )
-                    )}
-                </div>
-                {enlargedImage && (renderEnlargedPostImages())}
-                {enlargedCommentImage && (renderEnlargedCommentImages())}
             </div>
-            {showErrorPopup && renderErrorPopup()}
-            {showDeletePopup && (renderDeleteSavedPostPopup())}
-            {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-        </div>
-    )
-}
+        );
+    };
 
-const rootElement = document.getElementById('root');
-const root = createRoot(rootElement);
-root.render(<App />);
+    const renderDeleteSavedPostPopup = () => {
+        return (
+            <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex justify-center items-center">
+                <div className="bg-gray-900 p-8 rounded-md shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">Delete Post</h2>
+                    <p>Are you sure you want to delete this post?</p>
+                    <div className="flex justify-around">
+                        <button onClick={confirmDeletePost} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4">
+                            Yes, Delete
+                        </button>
+                        <button onClick={cancelDeletePost} className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Sidebar = ({ isOpen, toggleSidebar, addSubreddit, subreddits, selectedSubreddit, setSelectedSubreddit, removeSubreddit }) => {
+    const [newSubreddit, setNewSubreddit] = useState('');
+    const [isContextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [selectedSubredditForMenu, setSelectedSubredditForMenu] = useState(null);
+    const sidebarRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                setContextMenuVisible(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [sidebarRef]);
+
+    const handleInputChange = (e) => {
+        setNewSubreddit(e.target.value);
+    };
+
+    const handleAddSubreddit = () => {
+        if (newSubreddit.trim() !== '') {
+            addSubreddit(newSubreddit);
+            setNewSubreddit('');
+        }
+    };
+
+    const handleSubredditClick = (subredditName) => {
+        setSelectedSubreddit(subredditName);
+        toggleSidebar();
+    };
+
+    const handleContextMenu = (event, subredditName) => {
+        event.preventDefault();
+        setSelectedSubredditForMenu(subredditName);
+        setContextMenuPosition({ x: event.clientX, y: event.clientY });
+        setContextMenuVisible(true);
+    };
+
+    const handleRemoveSubreddit = () => {
+        removeSubreddit(selectedSubredditForMenu);
+        setContextMenuVisible(false);
+    };
+
+    return (
+        <div ref={sidebarRef} className={`sidebar fixed top-0 left-0 h-full w-64 bg-gray-900 text-white shadow-md transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} z-50`}>
+            <div className="p-4">
+                <h2 className="text-2xl font-semibold mb-4">Subreddits</h2>
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        className="w-full p-2 rounded-md bg-gray-800 text-white"
+                        placeholder="r/subreddit"
+                        value={newSubreddit}
+                        onChange={handleInputChange}
+                    />
+                    <button onClick={handleAddSubreddit} className="w-full mt-2 p-2 bg-blue-500 hover:bg-blue-700 text-white rounded-md">
+                        Add
+                    </button>
+                </div>
+                <ul>
+                    {subreddits.map(subreddit => (
+                        <li key={subreddit.name} className={`p-2 rounded-md hover:bg-gray-800 cursor-pointer ${selectedSubreddit === subreddit.name ? 'bg-gray-700' : ''}`}
+                            onClick={() => handleSubredditClick(subreddit.name)}
+                            onContextMenu={(event) => handleContextMenu(event, subreddit.name)}>
+                            {subreddit.name}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            {isContextMenuVisible && (
+                <div className="fixed z-50" style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}>
+                    <div className="bg-gray-800 shadow-md rounded-md py-2">
+                        <button className="block px-4 py-2 text-
