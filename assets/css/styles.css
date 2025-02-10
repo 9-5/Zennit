@@ -35,8 +35,165 @@ body {
     width: 12ch;
     overflow: hidden;
     white-space: nowrap
-... (FILE CONTENT TRUNCATED) ...
-ackground-color: rgba(224, 242, 254, 0.5); 
+}
+.subreddit-sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #2d3748;
+    color: white;
+    padding: 1rem;
+    overflow-y: auto;
+    z-index: 10;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%);
+}
+
+.subreddit-sidebar.open {
+    transform: translateX(0);
+}
+
+#search-input {
+    background-color: #4a5568;
+}
+
+#add-subreddit-input {
+    background-color: #4a5568;
+}
+
+.close-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    cursor: pointer;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.post {
+    border: 1px solid #4a5568;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.post-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.post-author {
+    font-size: 0.875rem;
+    color: #a0aec0;
+    margin-bottom: 0.25rem;
+}
+
+.post-score {
+    font-size: 0.875rem;
+    color: #a0aec0;
+}
+
+.post-comments {
+    font-size: 0.875rem;
+    color: #a0aec0;
+}
+.theme-switcher {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4a5568;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 999;
+}
+
+.theme-switcher:hover {
+    background-color: #718096;
+}
+.sidebar-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #4a5568;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 999;
+}
+
+.sidebar-button:hover {
+    background-color: #718096;
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #38a169;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.amethyst body {
+    background-color: #2a1b3e;
+    color: #e0d6f2;
+}
+
+.amethyst .post {
+    border-color: #5b4a8b;
+}
+
+.amethyst .post-author,
+.amethyst .post-score,
+.amethyst .post-comments {
+    color: #b0a1c1;
+}
+
+.amethyst .subreddit-sidebar {
+    background-color: #3e2a6b;
+}
+
+.amethyst #search-input,
+.amethyst #add-subreddit-input {
+    background-color: #5b4a8b;
+}
+
+.amethyst .sidebar-button,
+.amethyst .theme-switcher {
+    background-color: #5b4a8b;
+}
+
+.amethyst .sidebar-button:hover,
+.amethyst .theme-switcher:hover {
+    background-color: #7a6b9b;
 }
 
 .amethyst .bg-gray-700 {
