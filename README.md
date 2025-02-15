@@ -14,7 +14,7 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 [Features](#features)
 
-[Technologies Used](#technologies_used)
+[Technologies Used](#technologies-used)
 
 [Installation](#installation)
 
@@ -25,43 +25,28 @@ Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 [License](#license)
 
 ## Screenshots
-Clean, user-friendly interface:
 
-![Screenshot 1](https://github.com/0kb-club/zennit/blob/main/assets/screenshot_1.png?raw=true)
-
-Mobile-friendly design:
-
-![Screenshot 2](https://github.com/0kb-club/zennit/blob/main/assets/screenshot_2.png?raw=true)
+Include screenshots of the application here.
 
 ## Features
 
-*   Browse Reddit posts and comments in a clean and user-friendly interface.
-*   Add and remove subreddits from the sidebar.
-*   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
-*   Mobile-friendly design for browsing on the go.
-*   Optionally save posts for offline viewing.
-*   Supports multiple instances of the application.
-*   PWA support
+-   Browse Reddit posts and comments in a clean and user-friendly interface.
+-   Add and remove subreddits from the sidebar.
+-   View posts sorted by different criteria, such as Hot, New, Top, and Rising.
+-   Mobile-first design for seamless use on various devices.
+-   Toggle for NSFW content.
+-   Save posts to view later.
+-   Search for specific posts and subreddits.
 
 ## Technologies Used
 
-*   [React](https://reactjs.org/) - A JavaScript library for building user interfaces.
-*   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development.
-*   [Reddit API](https://www.reddit.com/dev/api/) - The API used to fetch Reddit posts and comments.
+-   React
+-   Tailwind CSS
+-   Reddit API
 
 ## Installation
 
-To install and run Zennit locally, follow these steps:
-
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/0kb-club/zennit.git
-    ```
-2.  Navigate to the project directory:
-    ```bash
-    cd zennit
-    ```
-3.  Open `index.html` in your web browser.
+To run Zennit locally, simply download the project and open the `index.html` file in your web browser.  All dependencies are included directly from the HTML file.
 
 **You can optionally host the project on [GitHub Pages](https://pages.github.com/) as a static website.**
 
