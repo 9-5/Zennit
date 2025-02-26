@@ -60,7 +60,7 @@ To run Zennit locally, follow these steps:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/zennit.git
+   git clone https://github.com/9-5/zennit.git
    cd zennit
    ```
 
