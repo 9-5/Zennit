@@ -6,7 +6,7 @@ Zennit is a zen Reddit experience designed to provide a clean and user-friendly 
 
 Right out of the box, Zennit made to function with both mobile devices and standard PC web browsers.
 
-View a live demo here: [zen.0kb.org](https://zen.0kb.org/)
+Instances: [zen.0kb.org](https://zen.0kb.org/) | [zen.ż.co](https://zen.ż.co/)
 
 ## Table of Contents
 
